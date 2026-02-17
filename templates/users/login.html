@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Login — Bookora{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="auth">
+  <div class="auth-card">
+    <div class="auth-head">
+      <h1>Welcome back 👋</h1>
+      <p>Log in to access your Bookora account.</p>
+    </div>
+
+    <form method="post" class="auth-form">
+      {% csrf_token %}
+
+      <label class="auth-label" for="id_username">Username</label>
+      <div class="auth-input-wrap">
+        <i class="fa-solid fa-user"></i>
+        <input id="id_username" type="text" name="username" autocomplete="username" required>
+      </div>
+
+      <label class="auth-label" for="id_password">Password</label>
+      <div class="auth-input-wrap">
+        <i class="fa-solid fa-lock"></i>
+        <input id="id_password" type="password" name="password" autocomplete="current-password" required>
+
+        <button type="button" class="auth-eye" data-toggle-password="#id_password" aria-label="Toggle password">
+          <i class="fa-solid fa-eye"></i>
+        </button>
+      </div>
+
+      <button type="submit" class="auth-btn">Log in</button>
+    </form>
+
+    <p class="auth-foot">
+      Don’t have an account?
+      <a href="{% url 'users:register' %}">Create one</a>
+    </p>
+  </div>
+</section>
+{% endblock %}

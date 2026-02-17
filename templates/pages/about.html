@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}About us - Bookora{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/about.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="about">
+  <div class="about-hero">
+    <div class="hero-left">
+      <span class="hero-badge">Trusted appointment scheduling</span>
+      <h1 class="hero-title">About Bookora</h1>
+      <p class="hero-subtitle">
+        Bookora helps clients find services and book appointments fast,
+        while providers manage schedules, availability and bookings in one place.
+      </p>
+
+      <div class="hero-actions">
+        <a href="{% url 'booking:services_list' %}" class="btn btn-primary">Browse services</a>
+        <a href="{% url 'users:register' %}" class="btn btn-ghost">Create account</a>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-number">1 min</div>
+          <div class="stat-label">to book an appointment</div>
+        </div>
+        <div class="stat">
+          <div class="stat-number">Simple</div>
+          <div class="stat-label">clear availability</div>
+        </div>
+        <div class="stat">
+          <div class="stat-number">24/7</div>
+          <div class="stat-label">booking access</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-right">
+      <div class="mock">
+        <div class="mock-top">
+          <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+        <div class="mock-body">
+          <div class="mock-card">
+            <div class="mock-title">Haircut</div>
+            <div class="mock-muted">Bucharest • Tue 14:30</div>
+            <div class="mock-row">
+              <span class="pill">30 min</span>
+              <span class="pill is-accent">Available</span>
+              <span class="pill">Confirm</span>
+            </div>
+            <div class="mock-cta"></div>
+          </div>
+
+          <div class="mock-card is-alt">
+            <div class="mock-title">Massage</div>
+            <div class="mock-muted">Cluj • Fri 11:00</div>
+            <div class="mock-row">
+              <span class="pill">60 min</span>
+              <span class="pill is-accent">Available</span>
+            </div>
+            <div class="mock-cta"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <div class="about-card">
+    <div class="section-header">
+      <h2 class="section-title">What you get</h2>
+      <p class="section-subtitle">Built for both clients and providers.</p>
+    </div>
+
+    <div class="about-grid">
+      <!-- Client -->
+      <div class="feature">
+        <h3 class="feature-title is-primary">📅 For clients</h3>
+        <p class="feature-text">Search services, pick a provider and book in a few clicks.</p>
+      </div>
+
+      <div class="feature">
+        <h3 class="feature-title">🔎 Smart discovery</h3>
+        <p class="feature-text">Browse services and find the right provider faster.</p>
+      </div>
+
+      <div class="feature">
+        <h3 class="feature-title is-success">✅ Simple bookings</h3>
+        <p class="feature-text">Clear slots, fast confirmation, and your bookings in one place.</p>
+      </div>
+
+      <!-- Provider -->
+      <div class="feature">
+        <h3 class="feature-title is-accent">🧑‍💼 For providers</h3>
+        <p class="feature-text">Create services, set availability, and manage bookings from your dashboard.</p>
+      </div>
+
+      <div class="feature">
+        <h3 class="feature-title">🕒 Availability rules</h3>
+        <p class="feature-text">Weekly schedule + time off, so clients only see valid slots.</p>
+      </div>
+
+      <div class="feature">
+        <h3 class="feature-title">📈 Admin-friendly management</h3>
+        <p class="feature-text">Track bookings by day/week and keep your schedule under control.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- How it works -->
+  <div class="about-card">
+    <div class="section-header">
+      <h2 class="section-title">How it works</h2>
+      <p class="section-subtitle">Two simple flows: clients and providers.</p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-icon">1</div>
+        <div>
+          <div class="step-title">Clients: find a service</div>
+          <div class="step-text">Browse the services catalog and open a provider page.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-icon">2</div>
+        <div>
+          <div class="step-title">Clients: choose a slot</div>
+          <div class="step-text">Pick an available time and confirm the booking after login.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-icon">3</div>
+        <div>
+          <div class="step-title">Providers: create services & schedule</div>
+          <div class="step-text">Add services, durations, and weekly availability in minutes.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-icon">4</div>
+        <div>
+          <div class="step-title">Providers: manage bookings</div>
+          <div class="step-text">Track bookings and cancellations from your dashboard.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="about-cta-card">
+    <h2 class="cta-title">Ready to get started?</h2>
+    <p class="cta-text">Browse services as a client or set up your business as a provider.</p>
+
+    <div class="cta-actions">
+      <a href="{% url 'booking:services_list' %}" class="btn btn-primary">Explore services</a>
+      {% if user.is_authenticated %}
+        <a href="{% url 'users:profile' %}" class="btn btn-ghost">My profile</a>
+      {% else %}
+        <a href="{% url 'users:register' %}" class="btn btn-ghost">Create an account</a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

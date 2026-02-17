@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My profile — Bookora{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/profile.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="profile">
+
+  <div class="profile-card">
+
+    <!-- Header -->
+    <div class="profile-header">
+
+      <div class="profile-info">
+        <h2>{{ user.username }}</h2>
+        <p>{{ user.email }}</p>
+
+        {% if user.user_type == "PROVIDER" %}
+          <span class="badge badge-provider">🧑‍💼 Provider</span>
+        {% else %}
+          <span class="badge badge-client">📅 Client</span>
+        {% endif %}
+      </div>
+
+      <form method="post" action="{% url 'users:logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="logout-btn" title="Logout">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        </button>
+      </form>
+
+    </div>
+
+    <!-- Actions -->
+    <div class="profile-grid">
+
+      {% if user.user_type == "CLIENT" %}
+
+        <a href="{% url 'booking:my_bookings' %}" class="profile-link">
+          <div class="icon blue"><i class="fa-solid fa-calendar-check"></i></div>
+          <h3>My bookings</h3>
+          <p>View and manage your reservations</p>
+        </a>
+
+        <a href="{% url 'booking:services_list' %}" class="profile-link">
+          <div class="icon green"><i class="fa-solid fa-magnifying-glass"></i></div>
+          <h3>Browse services</h3>
+          <p>Find a service and book an appointment</p>
+        </a>
+
+      {% endif %}
+
+      {% if user.user_type == "PROVIDER" %}
+
+        <a href="{% url 'dashboard:home' %}" class="profile-link">
+          <div class="icon blue"><i class="fa-solid fa-chart-line"></i></div>
+          <h3>Dashboard</h3>
+          <p>Manage your business overview</p>
+        </a>
+
+        <a href="{% url 'dashboard:services' %}" class="profile-link">
+          <div class="icon purple"><i class="fa-solid fa-scissors"></i></div>
+          <h3>My services</h3>
+          <p>Create and edit your services</p>
+        </a>
+
+        <a href="{% url 'dashboard:bookings' %}" class="profile-link">
+          <div class="icon green"><i class="fa-solid fa-calendar-days"></i></div>
+          <h3>Bookings</h3>
+          <p>See upcoming reservations</p>
+        </a>
+
+      {% endif %}
+
+    </div>
+
+  </div>
+
+</section>
+{% endblock %}

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="ro" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Bookora{% endblock %}</title>
+
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <!-- Global CSS -->
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+  {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="header-inner container">
+
+      <!-- Brand -->
+      <a href="{% url 'pages:home' %}" class="brand-link">
+        <span class="brand-badge">B</span>
+        <strong class="brand-name">Bookora</strong>
+      </a>
+
+      <!-- Mobile menu toggle -->
+      <button id="menuToggle" class="icon-btn mobile-only" aria-label="Menu">
+        <i class="fas fa-bars"></i>
+      </button>
+
+      <!-- Nav -->
+      <nav id="navbar" class="navbar" aria-label="Primary">
+        <ul class="nav-links" id="navLinks">
+          <!-- Public -->
+          <li><a href="{% url 'pages:home' %}" class="nav-link">Home</a></li>
+          <li><a href="{% url 'booking:services_list' %}" class="nav-link">Services</a></li>
+          <li><a href="{% url 'pages:about' %}" class="nav-link">About</a></li>
+
+          <!-- Auth-based -->
+          {% if user.is_authenticated %}
+
+            {# Client #}
+            {% if user.user_type == "CLIENT" %}
+              <li><a href="{% url 'booking:my_bookings' %}" class="nav-link">📅 My bookings</a></li>
+            {% endif %}
+
+            {# Provider #}
+            {% if user.user_type == "PROVIDER" %}
+              <li><a href="{% url 'dashboard:home' %}" class="nav-link">🧑‍💼 Dashboard</a></li>
+              <li><a href="{% url 'dashboard:bookings' %}" class="nav-link">Bookings</a></li>
+              <li><a href="{% url 'dashboard:services' %}" class="nav-link">My services</a></li>
+            {% endif %}
+
+            <!-- User dropdown -->
+            <li class="dropdown" id="userDropdown">
+              <button class="dropdown-btn" type="button" aria-haspopup="true" aria-expanded="false">
+                <i class="fa fa-user"></i>
+                <span class="hide-sm">{{ user.username }}</span>
+                <i class="fa fa-chevron-down chevron"></i>
+              </button>
+
+              <div class="dropdown-content" role="menu" aria-label="User menu">
+                <a href="{% url 'users:profile' %}" class="dropdown-item" role="menuitem">
+                  <i class="fa fa-id-badge"></i> Profile
+                </a>
+                <a href="{% url 'users:logout' %}" class="dropdown-item" role="menuitem">
+                  <i class="fa fa-right-from-bracket"></i> Logout
+                </a>
+              </div>
+            </li>
+
+          {% else %}
+            <li><a href="{% url 'users:login' %}" class="nav-link">Login</a></li>
+            <li><a href="{% url 'users:register' %}" class="nav-link nav-primary">Register</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+
+      <!-- Theme toggle -->
+      <button id="themeToggle" class="icon-btn" aria-label="Toggle theme" title="Toggle theme">
+        <i class="fas fa-moon"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Messages -->
+  {% if messages %}
+    <section class="messages container">
+      {% for message in messages %}
+        <div class="message-card">{{ message }}</div>
+      {% endfor %}
+    </section>
+  {% endif %}
+
+  <!-- Page content -->
+  <main class="page container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner container">
+      <p>&copy; {% now "Y" %} Bookora — Book appointments fast.</p>
+    </div>
+  </footer>
+
+  <script src="{% static 'js/base.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

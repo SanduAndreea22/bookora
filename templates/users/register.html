@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Create account — Bookora{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="auth">
+  <div class="auth-card">
+    <div class="auth-head">
+      <h1>Create your account ✨</h1>
+      <p>Join Bookora to book services and manage appointments.</p>
+    </div>
+
+    <form method="post" class="auth-form">
+      {% csrf_token %}
+
+      <label class="auth-label" for="id_username">Username</label>
+      <div class="auth-input-wrap">
+        <i class="fa-solid fa-user"></i>
+        <input id="id_username" type="text" name="username" autocomplete="username" required>
+      </div>
+
+      <label class="auth-label" for="id_email">Email</label>
+      <div class="auth-input-wrap">
+        <i class="fa-solid fa-envelope"></i>
+        <input id="id_email" type="email" name="email" autocomplete="email" required>
+      </div>
+
+      <label class="auth-label" for="id_password">Password</label>
+      <div class="auth-input-wrap">
+        <i class="fa-solid fa-lock"></i>
+        <input id="id_password" type="password" name="password" autocomplete="new-password" required>
+
+        <button type="button" class="auth-eye" data-toggle-password="#id_password" aria-label="Toggle password">
+          <i class="fa-solid fa-eye"></i>
+        </button>
+      </div>
+
+      <div class="auth-role">
+        <p class="auth-label" style="margin: 4px 0 6px;">I am a...</p>
+
+        <label class="auth-radio">
+          <input type="radio" name="role" value="CLIENT" checked>
+          <span>📅 Client</span>
+        </label>
+
+        <label class="auth-radio">
+          <input type="radio" name="role" value="PROVIDER">
+          <span>🧑‍💼 Provider</span>
+        </label>
+      </div>
+
+      <button type="submit" class="auth-btn">Create account</button>
+    </form>
+
+    <p class="auth-foot">
+      Already have an account?
+      <a href="{% url 'users:login' %}">Log in</a>
+    </p>
+  </div>
+</section>
+{% endblock %}

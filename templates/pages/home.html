@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Bookora{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="home">
+
+  <div class="home-hero">
+    <h1 class="home-title">Bookora</h1>
+    <p class="home-subtitle">Find a service. Book a slot. Done.</p>
+  </div>
+
+  <div class="home-grid">
+
+    <!-- Client -->
+    <div class="role-card">
+      <div class="role-icon is-primary">
+        <i class="fa-solid fa-calendar-check"></i>
+      </div>
+
+      <h2 class="role-title">Client</h2>
+      <p class="role-text">
+        Search services, choose a provider, and book appointments in seconds.
+      </p>
+
+      <div class="role-actions">
+        <a href="{% url 'booking:services_list' %}" class="btn btn-primary">Browse services</a>
+
+        {% if not user.is_authenticated %}
+          <a href="{% url 'users:register' %}" class="btn btn-ghost">Create account</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Provider -->
+    <div class="role-card">
+      <div class="role-icon is-accent">
+        <i class="fa-solid fa-store"></i>
+      </div>
+
+      <h2 class="role-title">Provider</h2>
+      <p class="role-text">
+        Create your business profile, set your schedule, and manage bookings in your dashboard.
+      </p>
+
+      <div class="role-actions">
+        {% if user.is_authenticated and user.user_type == "PROVIDER" %}
+          <a href="{% url 'dashboard:home' %}" class="btn btn-primary">Open dashboard</a>
+          <a href="{% url 'dashboard:services' %}" class="btn btn-ghost">My services</a>
+        {% else %}
+          <a href="{% url 'users:register' %}" class="btn btn-primary">Become a provider</a>
+          <a href="{% url 'pages:about' %}" class="btn btn-ghost">Learn more</a>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+</section>
+{% endblock %}
