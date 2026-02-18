@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Availability — Bookora{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/provider.css' %}">
+<link rel="stylesheet" href="{% static 'css/provider_availability.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="provider-page">
+
+  <header class="provider-hero">
+    <div>
+      <h1 class="provider-title">Availability</h1>
+      <p class="provider-subtitle">
+        Workspace: <strong>{{ workspace.name }}</strong>
+      </p>
+    </div>
+
+    <div class="hero-actions">
+      <a class="btn btn-ghost" href="{% url 'booking:provider_home' %}">← Provider</a>
+      <a class="btn btn-ghost" href="{% url 'booking:provider_services' %}">My services</a>
+      <a class="btn btn-primary" href="{% url 'booking:workspace_detail' workspace.slug %}">View public page</a>
+    </div>
+  </header>
+
+  <div class="provider-grid">
+
+    <!-- Add rule -->
+    <div class="card">
+      <h2 class="card-title">Add weekly rule</h2>
+
+      <form method="post" class="form">
+        {% csrf_token %}
+
+        <div class="field">
+          <label for="weekday">Weekday</label>
+          <select id="weekday" name="weekday" required>
+            {% for value, label in weekdays %}
+              <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="grid">
+          <div class="field">
+            <label for="start_time">Start time</label>
+            <input id="start_time" name="start_time" type="time" required value="09:00" />
+          </div>
+
+          <div class="field">
+            <label for="end_time">End time</label>
+            <input id="end_time" name="end_time" type="time" required value="17:00" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn btn-primary">Add rule</button>
+        </div>
+
+        <p class="muted hint">
+          Slots are generated in 30-minute steps using your service duration.
+        </p>
+      </form>
+    </div>
+
+    <!-- Rules list -->
+    <div class="card">
+      <h2 class="card-title">Current rules</h2>
+
+      {% if rules %}
+        <div class="rules-list">
+          {% for r in rules %}
+            <div class="rule-row">
+              <div>
+                <div class="rule-title">
+                  {{ r.get_weekday_display }}
+                </div>
+                <div class="muted rule-sub">
+                  {{ r.start_time|time:"H:i" }} – {{ r.end_time|time:"H:i" }}
+                </div>
+              </div>
+
+              <div class="pill">
+                Weekly
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty">
+          <h3>No rules yet</h3>
+          <p class="muted">Add at least one rule so clients can see available slots.</p>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+</section>
+{% endblock %}

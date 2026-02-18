@@ -1,60 +1,54 @@
 (function () {
-  function qs(id) { return document.getElementById(id); }
+  const html = document.documentElement;
 
-  document.addEventListener("DOMContentLoaded", () => {
-    // Mobile menu
-    const menuToggle = qs("menuToggle");
-    const navbar = qs("navbar");
-    if (menuToggle && navbar) {
-      menuToggle.addEventListener("click", () => {
-        navbar.classList.toggle("open");
-      });
-    }
+  // Theme
+  const themeToggle = document.getElementById("themeToggle");
+  const savedTheme = localStorage.getItem("bookora_theme");
+  if (savedTheme) html.setAttribute("data-theme", savedTheme);
 
-    // Dropdown user
-    const userDropdown = qs("userDropdown");
-    if (userDropdown) {
-      const btn = userDropdown.querySelector(".dropdown-btn");
-      btn?.addEventListener("click", (e) => {
-        e.stopPropagation();
-        userDropdown.classList.toggle("open");
-        btn.setAttribute("aria-expanded", userDropdown.classList.contains("open") ? "true" : "false");
-      });
+  function setTheme(next) {
+    html.setAttribute("data-theme", next);
+    localStorage.setItem("bookora_theme", next);
+  }
 
-      document.addEventListener("click", () => {
-        userDropdown.classList.remove("open");
-        btn?.setAttribute("aria-expanded", "false");
-      });
-    }
-
-    // Theme toggle (persist in localStorage)
-    const themeToggle = qs("themeToggle");
-    const root = document.documentElement;
-
-    const saved = localStorage.getItem("bookora_theme");
-    if (saved === "dark" || saved === "light") {
-      root.setAttribute("data-theme", saved);
-    }
-
-    function setTheme(next) {
-      root.setAttribute("data-theme", next);
-      localStorage.setItem("bookora_theme", next);
-      const icon = themeToggle?.querySelector("i");
-      if (icon) {
-        icon.className = next === "dark" ? "fas fa-sun" : "fas fa-moon";
-      }
-    }
-
-    // set initial icon
-    const current = root.getAttribute("data-theme") || "light";
-    setTheme(current);
-
-    themeToggle?.addEventListener("click", () => {
-      const now = root.getAttribute("data-theme") || "light";
-      setTheme(now === "dark" ? "light" : "dark");
+  if (themeToggle) {
+    themeToggle.addEventListener("click", () => {
+      const current = html.getAttribute("data-theme") || "light";
+      setTheme(current === "light" ? "dark" : "light");
     });
+  }
+
+  // Mobile nav
+  const menuToggle = document.getElementById("menuToggle");
+  const navbar = document.getElementById("navbar");
+  if (menuToggle && navbar) {
+    menuToggle.addEventListener("click", () => {
+      navbar.classList.toggle("open");
+    });
+  }
+
+  // Dropdown
+  const dropdown = document.getElementById("userDropdown");
+  if (dropdown) {
+    const btn = dropdown.querySelector(".dropdown-btn");
+    btn?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      dropdown.classList.toggle("open");
+      btn.setAttribute("aria-expanded", dropdown.classList.contains("open") ? "true" : "false");
+    });
+  }
+
+  // Close menus on outside click
+  document.addEventListener("click", () => {
+    navbar?.classList.remove("open");
+    if (dropdown) {
+      dropdown.classList.remove("open");
+      const btn = dropdown.querySelector(".dropdown-btn");
+      btn?.setAttribute("aria-expanded", "false");
+    }
   });
 })();
+
 
 // Password toggle buttons: <button data-toggle-password="#id_password">
 document.querySelectorAll("[data-toggle-password]").forEach((btn) => {

@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My services — Bookora{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/provider.css' %}">
+<link rel="stylesheet" href="{% static 'css/provider_services.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="provider-page">
+
+  <header class="provider-hero">
+    <div>
+      <h1 class="provider-title">My services</h1>
+      <p class="provider-subtitle">
+        Workspace: <strong>{{ workspace.name }}</strong>
+      </p>
+    </div>
+
+    <div class="hero-actions">
+      <a class="btn btn-ghost" href="{% url 'booking:provider_home' %}">← Provider</a>
+      <a class="btn btn-primary" href="{% url 'booking:provider_availability' %}">Set availability</a>
+    </div>
+  </header>
+
+  <div class="provider-grid">
+
+    <!-- Add service -->
+    <div class="card">
+      <h2 class="card-title">Add service</h2>
+
+      <form method="post" class="form">
+        {% csrf_token %}
+
+        <div class="field">
+          <label for="name">Service name</label>
+          <input id="name" name="name" required placeholder="e.g. Haircut" />
+        </div>
+
+        <div class="field">
+          <label for="description">Description</label>
+          <textarea id="description" name="description" rows="4" placeholder="Short description (optional)"></textarea>
+        </div>
+
+        <div class="grid">
+          <div class="field">
+            <label for="duration_min">Duration (minutes)</label>
+            <input id="duration_min" name="duration_min" type="number" min="5" step="5" value="30" />
+          </div>
+
+          <div class="field">
+            <label for="price">Price (optional)</label>
+            <input id="price" name="price" placeholder="e.g. 120.00" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn btn-primary">Add service</button>
+        </div>
+
+        <p class="muted hint">
+          Tip: set at least one availability rule so clients can see slots.
+        </p>
+      </form>
+    </div>
+
+    <!-- Services list -->
+    <div class="card">
+      <h2 class="card-title">Your services</h2>
+
+      {% if services %}
+        <div class="services-list">
+          {% for s in services %}
+            <div class="service-row">
+              <div>
+                <div class="service-name">{{ s.name }}</div>
+                <div class="service-sub muted">
+                  {{ s.duration_min }} min
+                  {% if s.price %} • {{ s.price }}{% endif %}
+                  {% if not s.is_active %} • Inactive{% endif %}
+                </div>
+                {% if s.description %}
+                  <div class="service-desc">{{ s.description|truncatechars:120 }}</div>
+                {% endif %}
+              </div>
+
+              <div class="service-actions">
+                <a class="btn btn-ghost" href="{% url 'booking:workspace_detail' workspace.slug %}">
+                  View public page
+                </a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty">
+          <h3>No services yet</h3>
+          <p class="muted">Add your first service using the form on the left.</p>
+        </div>
+      {% endif %}
+
+    </div>
+
+  </div>
+
+</section>
+{% endblock %}

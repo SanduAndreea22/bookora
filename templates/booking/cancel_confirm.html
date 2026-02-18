@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Cancel booking — Bookora{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/cancel_confirm.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="cancel-page">
+
+  <header class="cancel-hero">
+    <div>
+      <h1 class="cancel-title">Cancel booking</h1>
+      <p class="cancel-subtitle">Are you sure you want to cancel this booking?</p>
+    </div>
+
+    <a class="btn btn-ghost" href="{% url 'booking:my_bookings' %}">← Back</a>
+  </header>
+
+  <div class="card">
+    <div class="summary">
+      <div class="summary-row">
+        <div class="label">Business</div>
+        <div class="value">{{ booking.workspace.name }}</div>
+      </div>
+
+      <div class="summary-row">
+        <div class="label">Service</div>
+        <div class="value">{{ booking.service.name }}</div>
+      </div>
+
+      <div class="summary-row">
+        <div class="label">Date</div>
+        <div class="value">{{ booking.start_at|date:"M d, Y" }}</div>
+      </div>
+
+      <div class="summary-row">
+        <div class="label">Time</div>
+        <div class="value">{{ booking.start_at|date:"H:i" }} – {{ booking.end_at|date:"H:i" }}</div>
+      </div>
+
+      <div class="summary-row">
+        <div class="label">Status</div>
+        <div class="value">
+          <span class="status {% if booking.status == 'CANCELLED' %}is-cancelled{% else %}is-confirmed{% endif %}">
+            {{ booking.get_status_display }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    {% if booking.status == "CANCELLED" %}
+      <div class="info">
+        This booking is already cancelled.
+      </div>
+
+      <div class="actions">
+        <a class="btn btn-primary" href="{% url 'booking:my_bookings' %}">Back to My bookings</a>
+      </div>
+    {% else %}
+      <div class="warn">
+        Cancelling will free up this time slot for others.
+      </div>
+
+      <form method="post" class="actions">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Yes, cancel booking</button>
+        <a class="btn btn-ghost" href="{% url 'booking:my_bookings' %}">Keep booking</a>
+      </form>
+    {% endif %}
+  </div>
+
+</section>
+{% endblock %}

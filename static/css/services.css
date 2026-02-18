@@ -1,0 +1,198 @@
+.services-page {
+  display: grid;
+  gap: 16px;
+}
+
+.services-hero {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+}
+
+.services-hero h1 {
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: -0.02em;
+}
+
+.services-hero p {
+  margin: 8px 0 0;
+  color: var(--muted);
+}
+
+.services-filters {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr auto;
+  gap: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+
+@media (max-width: 860px) {
+  .services-filters {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field label {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0 0 6px;
+}
+
+.field input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  outline: none;
+}
+
+.field input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  align-items: end;
+  justify-content: flex-end;
+}
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.service-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 10px;
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.service-name {
+  font-weight: 900;
+  font-size: 16px;
+}
+
+.service-business {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.service-business a {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 800;
+}
+
+.service-business a:hover {
+  text-decoration: underline;
+}
+
+.dot {
+  margin: 0 6px;
+  opacity: 0.6;
+}
+
+.badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: flex-start;
+}
+
+.badge {
+  font-size: 12px;
+  font-weight: 800;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(2, 6, 23, 0.02);
+}
+
+.badge-accent {
+  border-color: rgba(79, 70, 229, 0.25);
+  background: rgba(79, 70, 229, 0.10);
+}
+
+.service-desc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.card-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+/* If base.css doesn't have buttons yet */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  text-decoration: none;
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 14px;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border-color: transparent;
+}
+
+.btn-primary:hover {
+  background: var(--primary-2);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text);
+}
+
+.btn-ghost:hover {
+  background: rgba(2, 6, 23, 0.04);
+}
+
+.empty {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+}

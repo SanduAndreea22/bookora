@@ -1,0 +1,49 @@
+.provider-page { display:grid; gap:16px; }
+
+.provider-hero{
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+}
+
+.provider-title{ margin:0; font-size:28px; letter-spacing:-0.02em; }
+.provider-subtitle{ margin:8px 0 0; color: var(--muted); }
+
+.card{
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+  display:grid;
+  gap: 14px;
+  max-width: 820px;
+}
+
+.card-title{ margin:0; font-size:18px; font-weight:900; }
+
+.rows{ display:grid; gap: 10px; }
+.row{
+  display:flex;
+  justify-content:space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(2, 6, 23, 0.01);
+}
+.label{ color: var(--muted); font-size: 13px; }
+.value{ font-weight: 900; text-align:right; }
+.value a{ color: var(--primary); text-decoration:none; font-weight:900; }
+.value a:hover{ text-decoration:underline; }
+
+.actions{
+  display:flex;
+  gap: 10px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+.muted{ color: var(--muted); }

@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ workspace.name }} — Bookora{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/workspace.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="workspace-page">
+
+  <header class="workspace-hero">
+    <div class="hero-left">
+      <h1 class="workspace-title">{{ workspace.name }}</h1>
+
+      <div class="workspace-meta">
+        {% if workspace.city %}<span>{{ workspace.city }}</span>{% endif %}
+        {% if workspace.address %}
+          {% if workspace.city %}<span class="dot">•</span>{% endif %}
+          <span>{{ workspace.address }}</span>
+        {% endif %}
+      </div>
+
+      <p class="workspace-subtitle">
+        Choose a service and a date to see available slots.
+      </p>
+
+      <div class="hero-actions">
+        <a class="btn btn-ghost" href="{% url 'booking:services_list' %}">← Back to services</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="workspace-grid">
+
+    <!-- Left: Services list -->
+    <div class="card">
+      <div class="card-head">
+        <h2>Services</h2>
+        <p>Pick one to book.</p>
+      </div>
+
+      {% if services %}
+        <div class="services-list">
+          {% for s in services %}
+            <label class="service-row">
+              <input type="radio" name="service_pick" value="{{ s.id }}" class="service-radio">
+              <div class="service-info">
+                <div class="service-name">{{ s.name }}</div>
+                <div class="service-mini">
+                  <span class="badge">{{ s.duration_min }} min</span>
+                  {% if s.price %}
+                    <span class="badge badge-accent">{{ s.price }}</span>
+                  {% endif %}
+                </div>
+                {% if s.description %}
+                  <div class="service-desc">{{ s.description|truncatechars:120 }}</div>
+                {% endif %}
+              </div>
+            </label>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="muted">No active services.</p>
+      {% endif %}
+    </div>
+
+    <!-- Right: Date + go to slots -->
+    <div class="card">
+      <div class="card-head">
+        <h2>Check availability</h2>
+        <p>Select a date, then see free hours.</p>
+      </div>
+
+      <form method="get" action="{% url 'booking:slots' workspace.slug %}" class="availability-form" id="availabilityForm">
+        <input type="hidden" name="service" id="serviceInput">
+
+        <div class="field">
+          <label for="date">Date</label>
+          <input type="date" id="date" name="date" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="seeSlotsBtn" disabled>
+          See available slots
+        </button>
+
+        <p class="help muted" id="pickHelp">
+          Pick a service first (left), then choose a date.
+        </p>
+      </form>
+    </div>
+
+  </div>
+
+</section>
+
+<script>
+  (function () {
+    const radios = document.querySelectorAll(".service-radio");
+    const serviceInput = document.getElementById("serviceInput");
+    const btn = document.getElementById("seeSlotsBtn");
+    const help = document.getElementById("pickHelp");
+
+    function update() {
+      const checked = document.querySelector(".service-radio:checked");
+      if (checked) {
+        serviceInput.value = checked.value;
+        btn.disabled = false;
+        help.textContent = "Now choose a date and continue.";
+      } else {
+        serviceInput.value = "";
+        btn.disabled = true;
+        help.textContent = "Pick a service first (left), then choose a date.";
+      }
+    }
+
+    radios.forEach(r => r.addEventListener("change", update));
+    update();
+  })();
+</script>
+{% endblock %}

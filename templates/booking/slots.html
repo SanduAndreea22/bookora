@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Slots — {{ service.name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/slots.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="slots-page">
+
+  <header class="slots-hero">
+    <div>
+      <h1 class="slots-title">Available slots</h1>
+      <p class="slots-subtitle">
+        <strong>{{ service.name }}</strong> at <strong>{{ workspace.name }}</strong>
+        — {{ day|date:"M d, Y" }}
+      </p>
+    </div>
+
+    <div class="slots-hero-actions">
+      <a class="btn btn-ghost" href="{% url 'booking:workspace_detail' workspace.slug %}">← Back</a>
+    </div>
+  </header>
+
+  <!-- Date switcher -->
+  <div class="date-card">
+    <form method="get" class="date-form">
+      <input type="hidden" name="service" value="{{ service.id }}">
+
+      <label class="date-label" for="date">Choose date</label>
+      <input id="date" name="date" type="date" value="{{ day|date:'Y-m-d' }}" required>
+
+      <button class="btn btn-primary" type="submit">Show slots</button>
+    </form>
+
+    <div class="date-quick">
+      {% with prev=day|date:"Y-m-d" %}
+      {% endwith %}
+      <a class="btn btn-ghost"
+         href="{% url 'booking:slots' workspace.slug %}?service={{ service.id }}&date={{ day|date:'Y-m-d' }}">
+        Today
+      </a>
+
+      {# tomorrow #}
+      <a class="btn btn-ghost"
+         href="{% url 'booking:slots' workspace.slug %}?service={{ service.id }}&date={{ day|add:'1 day'|date:'Y-m-d' }}">
+        Tomorrow
+      </a>
+    </div>
+  </div>
+
+  {% if slots %}
+    <div class="slots-grid">
+      {% for dt in slots %}
+        <a class="slot-card"
+           href="{% url 'booking:book_confirm' workspace.slug %}?service={{ service.id }}&start={{ dt|date:'c'|urlencode }}">
+          <div class="slot-time">{{ dt|date:"H:i" }}</div>
+          <div class="slot-meta">{{ service.duration_min }} min</div>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty">
+      <h2>No slots available</h2>
+      <p class="muted">
+        If it's already past business hours for this date, choose another day.
+      </p>
+
+      <a class="btn btn-primary"
+         href="{% url 'booking:slots' workspace.slug %}?service={{ service.id }}&date={{ day|add:'1 day'|date:'Y-m-d' }}">
+        Try next day
+      </a>
+
+      <a class="btn btn-ghost"
+         href="{% url 'booking:workspace_detail' workspace.slug %}">
+        Back to services
+      </a>
+    </div>
+  {% endif %}
+
+</section>
+{% endblock %}

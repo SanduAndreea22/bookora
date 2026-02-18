@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Confirm booking — Bookora{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/book_confirm.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="confirm-page">
+
+  <header class="confirm-hero">
+    <div>
+      <h1 class="confirm-title">Confirm booking</h1>
+      <p class="confirm-subtitle">Review details before confirming.</p>
+    </div>
+
+    <a class="btn btn-ghost"
+       href="{% url 'booking:slots' workspace.slug %}?service={{ service.id }}&date={{ start_at|date:'Y-m-d' }}">
+      ← Back to slots
+    </a>
+  </header>
+
+  <div class="confirm-grid">
+
+    <div class="card">
+      <h2 class="card-title">Booking details</h2>
+
+      <div class="rows">
+        <div class="row">
+          <div class="label">Business</div>
+          <div class="value">{{ workspace.name }}</div>
+        </div>
+
+        <div class="row">
+          <div class="label">Service</div>
+          <div class="value">{{ service.name }}</div>
+        </div>
+
+        <div class="row">
+          <div class="label">Date</div>
+          <div class="value">{{ start_at|date:"M d, Y" }}</div>
+        </div>
+
+        <div class="row">
+          <div class="label">Time</div>
+          <div class="value">{{ start_at|date:"H:i" }} – {{ end_at|date:"H:i" }}</div>
+        </div>
+
+        <div class="row">
+          <div class="label">Duration</div>
+          <div class="value">{{ service.duration_min }} min</div>
+        </div>
+
+        {% if service.price %}
+        <div class="row">
+          <div class="label">Price</div>
+          <div class="value">{{ service.price }}</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="card-title">Confirm</h2>
+
+      <p class="muted" style="margin-top:0;">
+        By confirming, this time slot will be reserved for your account.
+      </p>
+
+      <form method="post" class="confirm-actions">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary">Confirm booking</button>
+        <a class="btn btn-ghost" href="{% url 'booking:workspace_detail' workspace.slug %}">
+          Back to business
+        </a>
+      </form>
+
+      {% if user.is_authenticated and user.user_type != "CLIENT" %}
+        <div class="warn">
+          Only <strong>CLIENT</strong> accounts can create bookings.
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+</section>
+{% endblock %}

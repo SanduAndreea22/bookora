@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My bookings — Bookora{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/my_bookings.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="bookings-page">
+
+  <header class="bookings-hero">
+    <div>
+      <h1 class="bookings-title">My bookings</h1>
+      <p class="bookings-subtitle">All your reservations in one place.</p>
+    </div>
+
+    <a class="btn btn-primary" href="{% url 'booking:services_list' %}">
+      Browse services
+    </a>
+  </header>
+
+  {% if bookings %}
+    <div class="bookings-list">
+      {% for b in bookings %}
+        <article class="booking-card">
+          <div class="booking-top">
+            <div>
+              <div class="booking-service">{{ b.service.name }}</div>
+              <div class="booking-business">
+                <a href="{% url 'booking:workspace_detail' b.workspace.slug %}">
+                  {{ b.workspace.name }}
+                </a>
+                {% if b.workspace.city %}
+                  <span class="dot">•</span>
+                  <span class="muted">{{ b.workspace.city }}</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="booking-status {% if b.status == 'CANCELLED' %}is-cancelled{% else %}is-confirmed{% endif %}">
+              {{ b.get_status_display }}
+            </div>
+          </div>
+
+          <div class="booking-details">
+            <div class="detail">
+              <div class="label">Date</div>
+              <div class="value">{{ b.start_at|date:"M d, Y" }}</div>
+            </div>
+            <div class="detail">
+              <div class="label">Time</div>
+              <div class="value">{{ b.start_at|date:"H:i" }} – {{ b.end_at|date:"H:i" }}</div>
+            </div>
+            <div class="detail">
+              <div class="label">Duration</div>
+              <div class="value">{{ b.service.duration_min }} min</div>
+            </div>
+          </div>
+
+          <div class="booking-actions">
+            {% if b.status != 'CANCELLED' %}
+              <a class="btn btn-ghost" href="{% url 'booking:cancel_booking' b.id %}">
+                Cancel
+              </a>
+            {% else %}
+              <span class="muted">Cancelled</span>
+            {% endif %}
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty">
+      <h2>No bookings yet</h2>
+      <p>Browse services and reserve a slot.</p>
+      <a class="btn btn-primary" href="{% url 'booking:services_list' %}">Find services</a>
+    </div>
+  {% endif %}
+
+</section>
+{% endblock %}

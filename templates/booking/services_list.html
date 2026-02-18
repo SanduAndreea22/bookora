@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Services — Bookora{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/services.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="services-page">
+
+  <header class="services-hero">
+    <div>
+      <h1>Find a service</h1>
+      <p>Search businesses and book an available time slot.</p>
+    </div>
+  </header>
+
+  <form method="get" class="services-filters">
+    <div class="field">
+      <label for="q">Search</label>
+      <input id="q" name="q" value="{{ q }}" placeholder="Massage, haircut, consultation..." />
+    </div>
+
+    <div class="field">
+      <label for="city">City</label>
+      <input id="city" name="city" value="{{ city }}" placeholder="Bucharest, Cluj..." />
+    </div>
+
+    <div class="actions">
+      <button type="submit" class="btn btn-primary">Search</button>
+      <a href="{% url 'booking:services_list' %}" class="btn btn-ghost">Reset</a>
+    </div>
+  </form>
+
+  {% if services %}
+    <div class="services-grid">
+      {% for s in services %}
+        <article class="service-card">
+          <div class="card-top">
+            <div>
+              <div class="service-name">{{ s.name }}</div>
+
+              <div class="service-business">
+                <a href="{% url 'booking:workspace_detail' s.workspace.slug %}">
+                  {{ s.workspace.name }}
+                </a>
+                {% if s.workspace.city %}
+                  <span class="dot">•</span>
+                  <span class="muted">{{ s.workspace.city }}</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="badges">
+              <span class="badge">{{ s.duration_min }} min</span>
+              {% if s.price %}
+                <span class="badge badge-accent">{{ s.price }}</span>
+              {% endif %}
+            </div>
+          </div>
+
+          {% if s.description %}
+            <p class="service-desc">{{ s.description|truncatechars:140 }}</p>
+          {% else %}
+            <p class="service-desc muted">No description available.</p>
+          {% endif %}
+
+          <div class="card-actions">
+            <a class="btn btn-primary" href="{% url 'booking:workspace_detail' s.workspace.slug %}">
+              View business
+            </a>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty">
+      <h2>No services found</h2>
+      <p>Try changing your search or city.</p>
+    </div>
+  {% endif %}
+
+</section>
+{% endblock %}

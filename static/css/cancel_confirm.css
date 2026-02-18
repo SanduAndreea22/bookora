@@ -1,0 +1,102 @@
+.cancel-page { display:grid; gap:16px; }
+
+.cancel-hero{
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:14px;
+  flex-wrap:wrap;
+}
+
+.cancel-title{ margin:0; font-size:28px; letter-spacing:-0.02em; }
+.cancel-subtitle{ margin:8px 0 0; color: var(--muted); }
+
+.card{
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+  display:grid;
+  gap: 14px;
+  max-width: 760px;
+}
+
+.summary{ display:grid; gap: 10px; }
+
+.summary-row{
+  display:flex;
+  justify-content:space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(2, 6, 23, 0.01);
+}
+
+.label{ color: var(--muted); font-size: 13px; }
+.value{ font-weight: 900; text-align:right; }
+
+.status{
+  font-size: 12px;
+  font-weight: 900;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+}
+.status.is-confirmed{
+  border-color: rgba(16, 185, 129, 0.30);
+  background: rgba(16, 185, 129, 0.12);
+}
+.status.is-cancelled{
+  border-color: rgba(239, 68, 68, 0.30);
+  background: rgba(239, 68, 68, 0.10);
+}
+
+.warn{
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(239, 68, 68, 0.30);
+  background: rgba(239, 68, 68, 0.10);
+}
+
+.info{
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(79, 70, 229, 0.25);
+  background: rgba(79, 70, 229, 0.10);
+}
+
+.actions{
+  display:flex;
+  gap: 10px;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+}
+
+/* If base.css doesn't already have buttons */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:10px 12px; border-radius:14px;
+  border:1px solid var(--border);
+  text-decoration:none; cursor:pointer;
+  font-weight:900; font-size:14px;
+}
+.btn-ghost{ background: transparent; color: var(--text); }
+.btn-ghost:hover{ background: rgba(2, 6, 23, 0.04); }
+.btn-primary{ background: var(--primary); color:#fff; border-color:transparent; }
+.btn-primary:hover{ background: var(--primary-2); }
+
+.btn-danger{
+  background: rgba(239, 68, 68, 1);
+  color: #fff;
+  border-color: transparent;
+}
+.btn-danger:hover{
+  filter: brightness(0.95);
+}

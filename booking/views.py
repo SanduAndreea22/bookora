@@ -1,7 +1,5 @@
 from __future__ import annotations
-
 from datetime import datetime, timedelta, date
-
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
@@ -11,13 +9,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
 from django.utils.text import slugify
-
 from .models import Workspace, Service, AvailabilityRule, TimeOff, Booking
-
-
-# ============================================================
-# Helpers
-# ============================================================
 
 def is_provider(user) -> bool:
     return getattr(user, "user_type", "") == "PROVIDER"

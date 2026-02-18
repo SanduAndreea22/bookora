@@ -50,8 +50,9 @@
 
       <div class="role-actions">
         {% if user.is_authenticated and user.user_type == "PROVIDER" %}
-          <a href="{% url 'dashboard:home' %}" class="btn btn-primary">Open dashboard</a>
-          <a href="{% url 'dashboard:services' %}" class="btn btn-ghost">My services</a>
+        <a href="{% url 'booking:provider_home' %}" class="btn btn-primary">Open provider</a>
+        <a href="{% url 'booking:provider_services' %}" class="btn btn-ghost">My services</a>
+
         {% else %}
           <a href="{% url 'users:register' %}" class="btn btn-primary">Become a provider</a>
           <a href="{% url 'pages:about' %}" class="btn btn-ghost">Learn more</a>

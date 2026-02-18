@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Provider — Bookora{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/provider.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="provider-page">
+
+  <header class="provider-hero">
+    <div>
+      <h1 class="provider-title">Provider</h1>
+      <p class="provider-subtitle">Set up your business and start taking bookings.</p>
+    </div>
+  </header>
+
+  {% if workspace %}
+    <div class="card">
+      <h2 class="card-title">Your workspace</h2>
+
+      <div class="rows">
+        <div class="row">
+          <div class="label">Name</div>
+          <div class="value">{{ workspace.name }}</div>
+        </div>
+        <div class="row">
+          <div class="label">Public page</div>
+          <div class="value">
+            <a href="{% url 'booking:workspace_detail' workspace.slug %}">
+              /business/{{ workspace.slug }}/
+            </a>
+          </div>
+        </div>
+        {% if workspace.city %}
+        <div class="row">
+          <div class="label">City</div>
+          <div class="value">{{ workspace.city }}</div>
+        </div>
+        {% endif %}
+        {% if workspace.address %}
+        <div class="row">
+          <div class="label">Address</div>
+          <div class="value">{{ workspace.address }}</div>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="actions">
+        <a class="btn btn-primary" href="{% url 'booking:provider_services' %}">Manage services</a>
+        <a class="btn btn-ghost" href="{% url 'booking:provider_availability' %}">Set availability</a>
+      </div>
+    </div>
+  {% else %}
+    <div class="card">
+      <h2 class="card-title">Create your workspace</h2>
+      <p class="muted" style="margin-top:6px;">
+        You need a workspace before your services can appear in the marketplace.
+      </p>
+
+      <div class="actions">
+        <a class="btn btn-primary" href="{% url 'booking:provider_workspace_create' %}">
+          Create workspace
+        </a>
+      </div>
+    </div>
+  {% endif %}
+
+</section>
+{% endblock %}

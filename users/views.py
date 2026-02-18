@@ -6,10 +6,6 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
-
-# ============================
-# Register
-# ============================
 def register(request):
     if request.user.is_authenticated:
         return redirect("users:profile")
@@ -20,7 +16,6 @@ def register(request):
         password = request.POST.get("password", "")
         role = request.POST.get("role", "CLIENT").upper()
 
-        # Validation
         if len(username) < 4:
             messages.error(request, "Username must have at least 4 characters.")
             return redirect("users:register")
@@ -40,7 +35,6 @@ def register(request):
         if role not in ["CLIENT", "PROVIDER"]:
             role = "CLIENT"
 
-        # Create user
         user = User.objects.create_user(
             username=username,
             email=email,
@@ -53,10 +47,6 @@ def register(request):
 
     return render(request, "users/register.html")
 
-
-# ============================
-# Login
-# ============================
 def user_login(request):
     if request.user.is_authenticated:
         return redirect("pages:home")
@@ -77,20 +67,12 @@ def user_login(request):
 
     return render(request, "users/login.html")
 
-
-# ============================
-# Profile
-# ============================
 @login_required(login_url="users:login")
 def profile(request):
     return render(request, "users/profile.html", {
         "user": request.user
     })
 
-
-# ============================
-# Logout
-# ============================
 @login_required
 def user_logout(request):
     logout(request)

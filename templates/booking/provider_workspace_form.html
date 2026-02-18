@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Create workspace — Bookora{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/provider.css' %}">
+<link rel="stylesheet" href="{% static 'css/provider_workspace.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="provider-page">
+
+  <header class="provider-hero">
+    <div>
+      <h1 class="provider-title">Create your workspace</h1>
+      <p class="provider-subtitle">This will be your public business page on Bookora.</p>
+    </div>
+
+    <a class="btn btn-ghost" href="{% url 'booking:provider_home' %}">← Back</a>
+  </header>
+
+  <div class="card">
+    <h2 class="card-title">Workspace details</h2>
+
+    <form method="post" class="form">
+      {% csrf_token %}
+
+      <div class="grid">
+        <div class="field">
+          <label for="name">Business name</label>
+          <input id="name" name="name" required placeholder="e.g. Glow Studio" />
+        </div>
+
+        <div class="field">
+          <label for="city">City</label>
+          <input id="city" name="city" placeholder="e.g. Bucharest" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="address">Address</label>
+        <input id="address" name="address" placeholder="Street, number, etc." />
+      </div>
+
+      <div class="actions">
+        <button type="submit" class="btn btn-primary">Create workspace</button>
+        <a class="btn btn-ghost" href="{% url 'booking:provider_home' %}">Cancel</a>
+      </div>
+
+      <p class="muted hint">
+        The public URL will be generated automatically (slug).
+      </p>
+    </form>
+  </div>
+
+</section>
+{% endblock %}

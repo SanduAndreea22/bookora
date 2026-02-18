@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 {% load static %}
-<html lang="ro" data-theme="light">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}Bookora{% endblock %}</title>
 
   <!-- Fonts & Icons -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <!-- Global CSS -->
@@ -17,40 +17,38 @@
 
 <body>
   <header class="site-header">
-    <div class="header-inner container">
+    <div class="container header-inner">
 
       <!-- Brand -->
-      <a href="{% url 'pages:home' %}" class="brand-link">
+      <a href="{% url 'pages:home' %}" class="brand-link" aria-label="Bookora home">
         <span class="brand-badge">B</span>
         <strong class="brand-name">Bookora</strong>
       </a>
 
       <!-- Mobile menu toggle -->
-      <button id="menuToggle" class="icon-btn mobile-only" aria-label="Menu">
+      <button id="menuToggle" class="icon-btn mobile-only" aria-label="Toggle menu">
         <i class="fas fa-bars"></i>
       </button>
 
       <!-- Nav -->
       <nav id="navbar" class="navbar" aria-label="Primary">
         <ul class="nav-links" id="navLinks">
+
           <!-- Public -->
           <li><a href="{% url 'pages:home' %}" class="nav-link">Home</a></li>
           <li><a href="{% url 'booking:services_list' %}" class="nav-link">Services</a></li>
           <li><a href="{% url 'pages:about' %}" class="nav-link">About</a></li>
 
-          <!-- Auth-based -->
           {% if user.is_authenticated %}
 
-            {# Client #}
             {% if user.user_type == "CLIENT" %}
-              <li><a href="{% url 'booking:my_bookings' %}" class="nav-link">📅 My bookings</a></li>
+              <li><a href="{% url 'booking:my_bookings' %}" class="nav-link">My bookings</a></li>
             {% endif %}
 
-            {# Provider #}
             {% if user.user_type == "PROVIDER" %}
-              <li><a href="{% url 'dashboard:home' %}" class="nav-link">🧑‍💼 Dashboard</a></li>
-              <li><a href="{% url 'dashboard:bookings' %}" class="nav-link">Bookings</a></li>
-              <li><a href="{% url 'dashboard:services' %}" class="nav-link">My services</a></li>
+              <li><a href="{% url 'booking:provider_home' %}" class="nav-link">Provider</a></li>
+              <li><a href="{% url 'booking:provider_services' %}" class="nav-link">My services</a></li>
+              <li><a href="{% url 'booking:provider_availability' %}" class="nav-link">Availability</a></li>
             {% endif %}
 
             <!-- User dropdown -->
@@ -82,10 +80,10 @@
       <button id="themeToggle" class="icon-btn" aria-label="Toggle theme" title="Toggle theme">
         <i class="fas fa-moon"></i>
       </button>
+
     </div>
   </header>
 
-  <!-- Messages -->
   {% if messages %}
     <section class="messages container">
       {% for message in messages %}
@@ -94,7 +92,6 @@
     </section>
   {% endif %}
 
-  <!-- Page content -->
   <main class="page container">
     {% block content %}{% endblock %}
   </main>
@@ -109,3 +106,4 @@
   {% block extra_js %}{% endblock %}
 </body>
 </html>
+
