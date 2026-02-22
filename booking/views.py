@@ -10,6 +10,10 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
 from django.utils.text import slugify
 from .models import Workspace, Service, AvailabilityRule, TimeOff, Booking
+from django.shortcuts import get_object_or_404
+from django.utils.dateparse import parse_datetime
+from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 def is_provider(user) -> bool:
     return getattr(user, "user_type", "") == "PROVIDER"
@@ -356,6 +360,71 @@ def provider_availability(request):
         "weekdays": AvailabilityRule.Weekday.choices,
     })
 
+@login_required
+def provider_timeoff(request):
+    if not is_provider(request.user):
+        messages.error(request, "Only providers can access this page.")
+        return redirect("pages:home")
+
+    workspace = Workspace.objects.filter(owner=request.user).first()
+
+    if not workspace:
+        messages.error(request, "Create a workspace first.")
+        return redirect("booking:provider_workspace_create")
+
+    if request.method == "POST":
+        start_str = request.POST.get("start_at")
+        end_str = request.POST.get("end_at")
+        reason = request.POST.get("reason", "")
+
+        start_at = parse_datetime(start_str)
+        end_at = parse_datetime(end_str)
+
+        if not start_at or not end_at:
+            messages.error(request, "Invalid datetime format.")
+            return redirect("booking:provider_timeoff")
+
+        # timezone safety
+        if timezone.is_naive(start_at):
+            start_at = timezone.make_aware(start_at)
+
+        if timezone.is_naive(end_at):
+            end_at = timezone.make_aware(end_at)
+
+        timeoff = TimeOff(
+            workspace=workspace,
+            start_at=start_at,
+            end_at=end_at,
+            reason=reason,
+        )
+
+        try:
+            timeoff.full_clean()
+            timeoff.save()
+            messages.success(request, "Time blocked successfully.")
+        except ValidationError as e:
+            messages.error(request, e.message)
+
+        return redirect("booking:provider_timeoff")
+
+    timeoffs = workspace.time_off.all()
+
+    return render(request, "booking/provider_timeoff.html", {
+        "workspace": workspace,
+        "timeoffs": timeoffs,
+    })
+
+@login_required
+def delete_timeoff(request, timeoff_id):
+    timeoff = get_object_or_404(
+        TimeOff,
+        id=timeoff_id,
+        workspace__owner=request.user
+    )
+
+    timeoff.delete()
+    messages.success(request, "Time block removed.")
+    return redirect("booking:provider_timeoff")
 
 # ============================================================
 # Booking logic

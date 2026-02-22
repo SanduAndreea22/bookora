@@ -12,7 +12,8 @@ urlpatterns = [
     path("my-bookings/<int:booking_id>/cancel/", views.cancel_booking, name="cancel_booking"),
     path("provider/", views.provider_home, name="provider_home"),
     path("provider/workspace/create/", views.provider_workspace_create, name="provider_workspace_create"),
+    path("provider/timeoff/", views.provider_timeoff, name="provider_timeoff"),
+    path("provider/timeoff/<int:timeoff_id>/delete/", views.delete_timeoff, name="delete_timeoff"),
     path("provider/services/", views.provider_services, name="provider_services"),
     path("provider/availability/", views.provider_availability, name="provider_availability"),
 ]
-

@@ -1,0 +1,74 @@
+.timeoff-form {
+  margin-top: 20px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group.full {
+  grid-column: 1 / -1;
+}
+
+.form-group label {
+  font-size: 14px;
+  margin-bottom: 6px;
+  color: #555;
+}
+
+.form-group input {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+}
+
+.timeoff-list {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.timeoff-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fafafa;
+  border: 1px solid #eee;
+  padding: 14px;
+  border-radius: 12px;
+}
+
+.timeoff-date {
+  font-weight: 600;
+}
+
+.timeoff-reason {
+  font-size: 13px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.btn-small {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.btn-danger {
+  background: #e53935;
+  color: white;
+  border: none;
+  border-radius: 6px;
+}
+
+.btn-danger:hover {
+  background: #c62828;
+}
