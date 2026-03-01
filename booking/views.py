@@ -445,7 +445,6 @@ def delete_timeoff(request, timeoff_id):
 
 
 def get_available_slots(workspace: Workspace, service: Service, day: date):
-
     weekday = day.weekday()
     rules = AvailabilityRule.objects.filter(workspace=workspace, weekday=weekday).order_by("start_time")
     if not rules.exists():
@@ -475,7 +474,11 @@ def get_available_slots(workspace: Workspace, service: Service, day: date):
     all_blocked_intervals = existing_bookings + time_off_periods
 
     step = timedelta(minutes=30)
-    dur = timedelta(minutes=service.duration_min)
+
+    # --- MODIFICARE AICI: Adăugăm pauza de 15 minute la durata căutată ---
+    PAUZA_MIN = 15
+    dur_serviciu = timedelta(minutes=service.duration_min)
+    dur_cu_pauza = timedelta(minutes=service.duration_min + PAUZA_MIN)
 
     slots = []
     for rule in rules:
@@ -483,9 +486,10 @@ def get_available_slots(workspace: Workspace, service: Service, day: date):
         end_dt = timezone.make_aware(datetime.combine(day, rule.end_time), tz)
 
         t = start_dt
-        while t + dur <= end_dt:
+        # Verificăm dacă serviciul + pauza se încadrează în programul de lucru
+        while t + dur_cu_pauza <= end_dt:
             candidate_start = t
-            candidate_end = t + dur
+            candidate_end = t + dur_cu_pauza  # Verificăm ocuparea pentru tot intervalul (45 min)
 
             if candidate_start < booking_threshold:
                 t += step
@@ -502,7 +506,6 @@ def get_available_slots(workspace: Workspace, service: Service, day: date):
             t += step
 
     return slots
-
 
 def create_booking_atomic(workspace: Workspace, service: Service, customer, start_at, end_at):
     """
