@@ -480,32 +480,83 @@ def get_available_slots(workspace: Workspace, service: Service, day: date):
     dur_serviciu = timedelta(minutes=service.duration_min)
     dur_cu_pauza = timedelta(minutes=service.duration_min + PAUZA_MIN)
 
-    slots = []
-    for rule in rules:
-        start_dt = timezone.make_aware(datetime.combine(day, rule.start_time), tz)
-        end_dt = timezone.make_aware(datetime.combine(day, rule.end_time), tz)
+    def get_available_slots(workspace: Workspace, service: Service, day: date):
+        """
+        Calculează sloturile disponibile pentru un serviciu,
+        asigurând o pauză obligatorie de 15 minute după fiecare programare.
+        """
+        weekday = day.weekday()
+        rules = AvailabilityRule.objects.filter(workspace=workspace, weekday=weekday).order_by("start_time")
 
-        t = start_dt
-        # Verificăm dacă serviciul + pauza se încadrează în programul de lucru
-        while t + dur_cu_pauza <= end_dt:
-            candidate_start = t
-            candidate_end = t + dur_cu_pauza  # Verificăm ocuparea pentru tot intervalul (45 min)
+        if not rules.exists():
+            return []
 
-            if candidate_start < booking_threshold:
-                t += step
-                continue
+        tz = timezone.get_current_timezone()
+        now = timezone.now()
 
-            is_occupied = any(
-                start < candidate_end and end > candidate_start
-                for start, end in all_blocked_intervals
-            )
+        # Nu permitem rezervări cu mai puțin de 2 ore înainte
+        booking_threshold = now + timedelta(hours=2)
 
-            if not is_occupied:
-                slots.append(candidate_start)
+        day_start = timezone.make_aware(datetime.combine(day, datetime.min.time()), tz)
+        day_end = day_start + timedelta(days=1)
 
-            t += step
+        # Luăm toate rezervările și perioadele de time-off
+        existing_bookings = list(Booking.objects.filter(
+            workspace=workspace,
+            status=Booking.Status.CONFIRMED,
+            start_at__lt=day_end,
+            end_at__gt=day_start,
+        ).values_list("start_at", "end_at"))
 
-    return slots
+        time_off_periods = list(TimeOff.objects.filter(
+            workspace=workspace,
+            start_at__lt=day_end,
+            end_at__gt=day_start,
+        ).values_list("start_at", "end_at"))
+
+        all_blocked_intervals = existing_bookings + time_off_periods
+
+        # --- LOGICA DE PAUZĂ ---
+        PAUZA_MIN = 15
+        dur_serviciu = timedelta(minutes=service.duration_min)
+        dur_totala_blocata = timedelta(minutes=service.duration_min + PAUZA_MIN)
+
+        # Pasul cu care „scanăm” ziua pentru a găsi locuri libere
+        search_step = timedelta(minutes=15)
+
+        slots = []
+        for rule in rules:
+            start_dt = timezone.make_aware(datetime.combine(day, rule.start_time), tz)
+            end_dt = timezone.make_aware(datetime.combine(day, rule.end_time), tz)
+
+            t = start_dt
+            # Căutăm sloturi cât timp serviciul se încadrează în program
+            while t + dur_serviciu <= end_dt:
+                candidate_start = t
+                # Verificăm dacă intervalul (Serviciu + Pauză) este liber
+                candidate_end_with_pauza = t + dur_totala_blocata
+
+                # Sărim peste orele din trecut sau sub pragul de 2 ore
+                if candidate_start < booking_threshold:
+                    t += search_step
+                    continue
+
+                # Verificăm dacă acest bloc (serviciu + pauză) se suprapune cu altceva
+                is_occupied = any(
+                    start < candidate_end_with_pauza and end > candidate_start
+                    for start, end in all_blocked_intervals
+                )
+
+                if not is_occupied:
+                    slots.append(candidate_start)
+                    # SECRETUL: Dacă am găsit loc, următorul slot POSIBIL
+                    # începe abia după ce se termină serviciul + pauza actuală
+                    t += dur_totala_blocata
+                else:
+                    # Dacă e ocupat, căutăm mai departe peste 15 minute
+                    t += search_step
+
+        return slots
 
 def create_booking_atomic(workspace: Workspace, service: Service, customer, start_at, end_at):
     """
