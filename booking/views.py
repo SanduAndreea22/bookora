@@ -2,12 +2,10 @@ from __future__ import annotations
 from datetime import datetime, timedelta, date
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q
-from django.shortcuts import get_object_or_404, redirect, render
-from django.utils import timezone
-from django.utils.dateparse import parse_date, parse_datetime
+from django.shortcuts import redirect, render
+from django.utils.dateparse import parse_date
 from django.utils.text import slugify
 from .models import Workspace, Service, AvailabilityRule, TimeOff, Booking
 from django.shortcuts import get_object_or_404
@@ -32,10 +30,6 @@ class SlotError(Exception):
 # ============================================================
 
 def services_list(request):
-    """
-    /services/?q=&city=
-    Public: list services across all workspaces.
-    """
     q = (request.GET.get("q") or "").strip()
     city = (request.GET.get("city") or "").strip()
 
@@ -61,10 +55,6 @@ def services_list(request):
 
 
 def workspace_detail(request, slug: str):
-    """
-    /business/<slug>/
-    Public: workspace page showing its services.
-    """
     workspace = get_object_or_404(Workspace, slug=slug)
     services = workspace.services.filter(is_active=True).order_by("name")
 
@@ -75,10 +65,6 @@ def workspace_detail(request, slug: str):
 
 
 def slots_view(request, slug: str):
-    """
-    /business/<slug>/slots/?service=<id>&date=YYYY-MM-DD
-    Public: see available slots for a service on a day.
-    """
     workspace = get_object_or_404(Workspace, slug=slug)
 
     service_id = request.GET.get("service")
@@ -111,10 +97,6 @@ def slots_view(request, slug: str):
 
 @login_required(login_url="users:login")
 def book_confirm(request, slug: str):
-    """
-    /business/<slug>/book/?service=<id>&start=ISO_DATETIME
-    Client confirms booking. POST creates booking atomically.
-    """
     workspace = get_object_or_404(Workspace, slug=slug)
 
     service_id = request.GET.get("service")
@@ -170,10 +152,7 @@ def book_confirm(request, slug: str):
 
 @login_required(login_url="users:login")
 def my_bookings(request):
-    """
-    /my-bookings/
-    Client only.
-    """
+
     if not is_client(request.user):
         messages.error(request, "Only clients can access My bookings.")
         return redirect("pages:home")
@@ -187,10 +166,6 @@ def my_bookings(request):
 
 @login_required(login_url="users:login")
 def cancel_booking(request, booking_id: int):
-    """
-    /my-bookings/<id>/cancel/
-    Client cancels their booking (soft cancel).
-    """
     if not is_client(request.user):
         messages.error(request, "Only clients can cancel bookings.")
         return redirect("pages:home")
@@ -212,10 +187,7 @@ def cancel_booking(request, booking_id: int):
 
 @login_required(login_url="users:login")
 def provider_home(request):
-    """
-    /provider/
-    Provider landing page. If no workspace -> create it.
-    """
+
     if not is_provider(request.user):
         messages.error(request, "Only providers can access this page.")
         return redirect("pages:home")
@@ -226,10 +198,7 @@ def provider_home(request):
 
 @login_required(login_url="users:login")
 def provider_workspace_create(request):
-    """
-    /provider/workspace/create/
-    MVP: one workspace per provider.
-    """
+
     if not is_provider(request.user):
         messages.error(request, "Only providers can create a workspace.")
         return redirect("pages:home")
@@ -242,6 +211,7 @@ def provider_workspace_create(request):
         name = (request.POST.get("name") or "").strip()
         city = (request.POST.get("city") or "").strip()
         address = (request.POST.get("address") or "").strip()
+        currency = (request.POST.get("currency") or "RON").strip().upper()
 
         if len(name) < 3:
             messages.error(request, "Business name must be at least 3 characters.")
@@ -260,6 +230,7 @@ def provider_workspace_create(request):
             slug=slug,
             city=city,
             address=address,
+            currency=currency,
         )
         messages.success(request, "Workspace created.")
         return redirect("booking:provider_services")
@@ -269,10 +240,7 @@ def provider_workspace_create(request):
 
 @login_required(login_url="users:login")
 def provider_services(request):
-    """
-    /provider/services/
-    Create and list services for the provider workspace.
-    """
+
     if not is_provider(request.user):
         messages.error(request, "Only providers can manage services.")
         return redirect("pages:home")
@@ -312,15 +280,13 @@ def provider_services(request):
     return render(request, "booking/provider_services.html", {
         "workspace": workspace,
         "services": services,
+        "currency": workspace.currency
     })
 
 
 @login_required(login_url="users:login")
 def provider_availability(request):
-    """
-    /provider/availability/
-    Add weekly availability rules.
-    """
+
     if not is_provider(request.user):
         messages.error(request, "Only providers can manage availability.")
         return redirect("pages:home")
@@ -515,4 +481,3 @@ def create_booking_atomic(workspace: Workspace, service: Service, customer, star
         booking.full_clean()
         booking.save()
         return booking
-

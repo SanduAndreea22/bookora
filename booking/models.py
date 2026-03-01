@@ -21,6 +21,11 @@ class Workspace(models.Model):
     city = models.CharField(max_length=120, blank=True, default="")
     address = models.CharField(max_length=255, blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
+    currency = models.CharField(
+        max_length=3,
+        default="RON",
+        help_text="Codul ISO al monedei (ex: RON, EUR, USD)"
+    )
 
     class Meta:
         ordering = ["name"]
@@ -88,6 +93,12 @@ class Service(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.duration_min} min)"
+
+    @property
+    def formatted_price(self):
+        if self.price is not None:
+            return f"{self.price} {self.workspace.currency}"
+        return "Free"
 
 
 # ====================================

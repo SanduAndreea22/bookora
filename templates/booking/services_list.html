@@ -20,12 +20,12 @@
   <form method="get" class="services-filters">
     <div class="field">
       <label for="q">Search</label>
-      <input id="q" name="q" value="{{ q }}" placeholder="Massage, haircut, consultation..." />
+      <input id="q" name="q" value="{{ q|default:'' }}" placeholder="Massage, haircut, consultation..." />
     </div>
 
     <div class="field">
       <label for="city">City</label>
-      <input id="city" name="city" value="{{ city }}" placeholder="Bucharest, Cluj..." />
+      <input id="city" name="city" value="{{ city|default:'' }}" placeholder="Bucharest, Cluj..." />
     </div>
 
     <div class="actions">
@@ -56,7 +56,9 @@
             <div class="badges">
               <span class="badge">{{ s.duration_min }} min</span>
               {% if s.price %}
-                <span class="badge badge-accent">{{ s.price }}</span>
+                <span class="badge badge-accent">{{ s.price }} {{ s.workspace.currency }}</span>
+              {% else %}
+                <span class="badge">Free</span>
               {% endif %}
             </div>
           </div>

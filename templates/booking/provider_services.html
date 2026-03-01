@@ -16,6 +16,7 @@
       <h1 class="provider-title">My services</h1>
       <p class="provider-subtitle">
         Workspace: <strong>{{ workspace.name }}</strong>
+        <span class="badge">Currency: {{ workspace.currency }}</span>
       </p>
     </div>
 
@@ -27,7 +28,6 @@
 
   <div class="provider-grid">
 
-    <!-- Add service -->
     <div class="card">
       <h2 class="card-title">Add service</h2>
 
@@ -51,8 +51,8 @@
           </div>
 
           <div class="field">
-            <label for="price">Price (optional)</label>
-            <input id="price" name="price" placeholder="e.g. 120.00" />
+            <label for="price">Price ({{ workspace.currency }})</label>
+            <input id="price" name="price" type="number" step="0.01" placeholder="e.g. 120.00" />
           </div>
         </div>
 
@@ -66,7 +66,6 @@
       </form>
     </div>
 
-    <!-- Services list -->
     <div class="card">
       <h2 class="card-title">Your services</h2>
 
@@ -78,7 +77,11 @@
                 <div class="service-name">{{ s.name }}</div>
                 <div class="service-sub muted">
                   {{ s.duration_min }} min
-                  {% if s.price %} • {{ s.price }}{% endif %}
+                  {% if s.price %}
+                    • <strong>{{ s.price }} {{ workspace.currency }}</strong>
+                  {% else %}
+                    • Free
+                  {% endif %}
                   {% if not s.is_active %} • Inactive{% endif %}
                 </div>
                 {% if s.description %}
