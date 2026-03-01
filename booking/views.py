@@ -113,7 +113,7 @@ def book_confirm(request, slug: str):
         messages.error(request, "Invalid start datetime.")
         return redirect("booking:workspace_detail", slug=slug)
 
-    # Ensure timezone-aware
+    # Ne asigurăm că avem un timezone corect
     if timezone.is_naive(start_at):
         start_at = timezone.make_aware(start_at, timezone.get_current_timezone())
 
@@ -124,7 +124,17 @@ def book_confirm(request, slug: str):
             messages.error(request, "Only clients can create bookings.")
             return redirect("booking:workspace_detail", slug=slug)
 
+        # --- VERIFICARE FINALĂ DE SECURITATE ---
+        # Re-calculăm sloturile disponibile pentru acea zi
+        # Asta verifică automat: trecutul, pragul de 2 ore, regulile de lucru și suprapunerile.
+        available_slots = get_available_slots(workspace, service, start_at.date())
+
+        if start_at not in available_slots:
+            messages.error(request, "This slot is no longer available or is too close to the current time.")
+            return redirect("booking:workspace_detail", slug=slug)
+
         try:
+            # create_booking_atomic se ocupă de blocarea bazei de date (select_for_update)
             create_booking_atomic(
                 workspace=workspace,
                 service=service,
@@ -132,15 +142,15 @@ def book_confirm(request, slug: str):
                 start_at=start_at,
                 end_at=end_at,
             )
+            messages.success(request, "Booking created successfully!")
+            return redirect("booking:my_bookings")
+
         except SlotError as e:
             messages.error(request, str(e))
             return redirect("booking:workspace_detail", slug=slug)
         except ValidationError as e:
             messages.error(request, "; ".join(e.messages))
             return redirect("booking:workspace_detail", slug=slug)
-
-        messages.success(request, "Booking created successfully!")
-        return redirect("booking:my_bookings")
 
     return render(request, "booking/book_confirm.html", {
         "workspace": workspace,
@@ -185,15 +195,56 @@ def cancel_booking(request, booking_id: int):
 # Provider setup (NO admin)
 # ============================================================
 
+from django.db.models import Sum
+from django.utils import timezone
+
+
 @login_required(login_url="users:login")
 def provider_home(request):
-
     if not is_provider(request.user):
         messages.error(request, "Only providers can access this page.")
         return redirect("pages:home")
 
     workspace = Workspace.objects.filter(owner=request.user).first()
-    return render(request, "booking/provider_home.html", {"workspace": workspace})
+
+    # Pregătim datele pentru Dashboard
+    now = timezone.now()
+    today = now.date()
+
+    bookings_today = []
+    stats = {
+        "revenue_today": 0,
+        "count_today": 0,
+        "upcoming_total": 0,
+    }
+
+    if workspace:
+        # 1. Agenda de azi: Filtrăm toate rezervările confirmate pentru data curentă
+        bookings_today = workspace.bookings.filter(
+            start_at__date=today,
+            status=Booking.Status.CONFIRMED
+        ).select_related('customer', 'service').order_by('start_at')
+
+        # 2. Calculăm Venitul de Azi (Accounting touch!)
+        # Sumăm prețurile serviciilor pentru programările de astăzi
+        stats["revenue_today"] = bookings_today.aggregate(
+            total=Sum('service__price')
+        )['total'] or 0
+
+        stats["count_today"] = bookings_today.count()
+
+        # 3. Total Rezervări Viitoare (pentru a vedea gradul de ocupare general)
+        stats["upcoming_total"] = workspace.bookings.filter(
+            start_at__gte=now,
+            status=Booking.Status.CONFIRMED
+        ).count()
+
+    return render(request, "booking/provider_home.html", {
+        "workspace": workspace,
+        "bookings_today": bookings_today,
+        "stats": stats,
+        "today": today,
+    })
 
 
 @login_required(login_url="users:login")
@@ -392,14 +443,9 @@ def delete_timeoff(request, timeoff_id):
     messages.success(request, "Time block removed.")
     return redirect("booking:provider_timeoff")
 
-# ============================================================
-# Booking logic
-# ============================================================
 
 def get_available_slots(workspace: Workspace, service: Service, day: date):
-    """
-    Returns list of timezone-aware datetime starts in 30-minute increments.
-    """
+
     weekday = day.weekday()
     rules = AvailabilityRule.objects.filter(workspace=workspace, weekday=weekday).order_by("start_time")
     if not rules.exists():
@@ -408,21 +454,25 @@ def get_available_slots(workspace: Workspace, service: Service, day: date):
     tz = timezone.get_current_timezone()
     now = timezone.now()
 
+    booking_threshold = now + timedelta(hours=2)
+
     day_start = timezone.make_aware(datetime.combine(day, datetime.min.time()), tz)
     day_end = day_start + timedelta(days=1)
 
-    existing = Booking.objects.filter(
+    existing_bookings = list(Booking.objects.filter(
         workspace=workspace,
         status=Booking.Status.CONFIRMED,
         start_at__lt=day_end,
         end_at__gt=day_start,
-    )
+    ).values_list("start_at", "end_at"))
 
-    time_off = TimeOff.objects.filter(
+    time_off_periods = list(TimeOff.objects.filter(
         workspace=workspace,
         start_at__lt=day_end,
         end_at__gt=day_start,
-    )
+    ).values_list("start_at", "end_at"))
+
+    all_blocked_intervals = existing_bookings + time_off_periods
 
     step = timedelta(minutes=30)
     dur = timedelta(minutes=service.duration_min)
@@ -437,19 +487,18 @@ def get_available_slots(workspace: Workspace, service: Service, day: date):
             candidate_start = t
             candidate_end = t + dur
 
-            if candidate_start < now:
+            if candidate_start < booking_threshold:
                 t += step
                 continue
 
-            if time_off.filter(start_at__lt=candidate_end, end_at__gt=candidate_start).exists():
-                t += step
-                continue
+            is_occupied = any(
+                start < candidate_end and end > candidate_start
+                for start, end in all_blocked_intervals
+            )
 
-            if existing.filter(start_at__lt=candidate_end, end_at__gt=candidate_start).exists():
-                t += step
-                continue
+            if not is_occupied:
+                slots.append(candidate_start)
 
-            slots.append(candidate_start)
             t += step
 
     return slots

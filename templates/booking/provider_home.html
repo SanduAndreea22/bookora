@@ -1,10 +1,20 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Provider — Bookora{% endblock %}
+{% block title %}Provider Dashboard — Bookora{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/provider.css' %}">
+<style>
+  /* Mici retușuri stilistice pentru Dashboard */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+  .stat-card { background: #f8f9fa; padding: 1.5rem; border-radius: 8px; text-align: center; border: 1px solid #eee; }
+  .stat-value { font-size: 1.5rem; font-weight: bold; color: #2ecc71; display: block; }
+  .stat-label { font-size: 0.85rem; color: #666; text-transform: uppercase; }
+  .agenda-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+  .agenda-table th, .agenda-table td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+  .badge-success { background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -12,40 +22,70 @@
 
   <header class="provider-hero">
     <div>
-      <h1 class="provider-title">Provider</h1>
-      <p class="provider-subtitle">Set up your business and start taking bookings.</p>
+      <h1 class="provider-title">Business Dashboard</h1>
+      <p class="provider-subtitle">Welcome back! Here's what's happening today, {{ today|date:"d M Y" }}.</p>
     </div>
   </header>
 
   {% if workspace %}
-    <div class="card">
-      <h2 class="card-title">Your workspace</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-label">Revenue Today</span>
+        <span class="stat-value">{{ stats.revenue_today }} {{ workspace.currency }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Bookings Today</span>
+        <span class="stat-value" style="color: #3498db;">{{ stats.count_today }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Total Upcoming</span>
+        <span class="stat-value" style="color: #9b59b6;">{{ stats.upcoming_total }}</span>
+      </div>
+    </div>
 
+    <div class="card" style="margin-bottom: 2rem;">
+      <h2 class="card-title">Today's Schedule</h2>
+      {% if bookings_today %}
+        <table class="agenda-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Client</th>
+              <th>Service</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for booking in bookings_today %}
+            <tr>
+              <td><strong>{{ booking.start_at|date:"H:i" }}</strong></td>
+              <td>{{ booking.customer.get_full_name|default:booking.customer.username }}</td>
+              <td>{{ booking.service.name }}</td>
+              <td><span class="badge-success">Confirmed</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="muted" style="margin-top: 20px; text-align: center;">No appointments for today yet.</p>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h2 class="card-title">Workspace Settings</h2>
       <div class="rows">
         <div class="row">
           <div class="label">Name</div>
           <div class="value">{{ workspace.name }}</div>
         </div>
         <div class="row">
-          <div class="label">Public page</div>
+          <div class="label">Public link</div>
           <div class="value">
-            <a href="{% url 'booking:workspace_detail' workspace.slug %}">
-              /business/{{ workspace.slug }}/
+            <a href="{% url 'booking:workspace_detail' workspace.slug %}" target="_blank">
+              view public page ↗
             </a>
           </div>
         </div>
-        {% if workspace.city %}
-        <div class="row">
-          <div class="label">City</div>
-          <div class="value">{{ workspace.city }}</div>
-        </div>
-        {% endif %}
-        {% if workspace.address %}
-        <div class="row">
-          <div class="label">Address</div>
-          <div class="value">{{ workspace.address }}</div>
-        </div>
-        {% endif %}
       </div>
 
       <div class="actions">
@@ -54,17 +94,13 @@
         <a class="btn btn-ghost" href="{% url 'booking:provider_timeoff' %}">Manage time off</a>
       </div>
     </div>
+
   {% else %}
     <div class="card">
       <h2 class="card-title">Create your workspace</h2>
-      <p class="muted" style="margin-top:6px;">
-        You need a workspace before your services can appear in the marketplace.
-      </p>
-
+      <p class="muted">You need a workspace before your services can appear.</p>
       <div class="actions">
-        <a class="btn btn-primary" href="{% url 'booking:provider_workspace_create' %}">
-          Create workspace
-        </a>
+        <a class="btn btn-primary" href="{% url 'booking:provider_workspace_create' %}">Create workspace</a>
       </div>
     </div>
   {% endif %}
