@@ -219,6 +219,14 @@ html[data-theme="dark"] .dropdown-item:hover{
   .dropdown.open .dropdown-content{ display:block; }
 }
 
+/* Inline accent link, for CTAs embedded in body text */
+.link-accent{
+  color: var(--primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+.link-accent:hover{ text-decoration: underline; }
+
 /* Messages */
 .messages{
   padding: 12px 0 0;
@@ -239,6 +247,7 @@ html[data-theme="dark"] .dropdown-item:hover{
   border-top: 1px solid var(--border);
   padding: 18px 0;
   color: var(--muted);
+  text-align: center;
 }
 .footer-inner p{ margin:0; }
 

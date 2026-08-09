@@ -131,7 +131,7 @@
     {% elif user.is_authenticated %}
       <p class="muted">You can leave a review after a completed booking with this business.</p>
     {% else %}
-      <p class="muted"><a href="{% url 'users:login' %}">Log in</a> to leave a review after your visit.</p>
+      <p class="muted"><a href="{% url 'users:login' %}" class="link-accent">Log in</a> to leave a review after your visit.</p>
     {% endif %}
 
     {% if reviews %}
