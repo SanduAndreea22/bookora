@@ -56,19 +56,19 @@
 
       {% if user.user_type == "PROVIDER" %}
 
-        <a href="{% url 'dashboard:home' %}" class="profile-link">
+        <a href="{% url 'booking:provider_home' %}" class="profile-link">
           <div class="icon blue"><i class="fa-solid fa-chart-line"></i></div>
           <h3>Dashboard</h3>
           <p>Manage your business overview</p>
         </a>
 
-        <a href="{% url 'dashboard:services' %}" class="profile-link">
+        <a href="{% url 'booking:provider_services' %}" class="profile-link">
           <div class="icon purple"><i class="fa-solid fa-scissors"></i></div>
           <h3>My services</h3>
           <p>Create and edit your services</p>
         </a>
 
-        <a href="{% url 'dashboard:bookings' %}" class="profile-link">
+        <a href="{% url 'booking:provider_home' %}" class="profile-link">
           <div class="icon green"><i class="fa-solid fa-calendar-days"></i></div>
           <h3>Bookings</h3>
           <p>See upcoming reservations</p>
