@@ -2,12 +2,14 @@ from __future__ import annotations
 from datetime import datetime, timedelta, date
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import redirect, render
 from django.utils.dateparse import parse_date
 from django.utils.text import slugify
-from .models import Workspace, Service, AvailabilityRule, TimeOff, Booking
+from django.db.models import Avg, Count
+from .models import Workspace, Service, AvailabilityRule, TimeOff, Booking, Review
 from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_datetime
 from django.core.exceptions import ValidationError
@@ -58,9 +60,29 @@ def workspace_detail(request, slug: str):
     workspace = get_object_or_404(Workspace, slug=slug)
     services = workspace.services.filter(is_active=True).order_by("name")
 
+    reviews = workspace.reviews.select_related("customer").order_by("-created_at")
+    rating_stats = reviews.aggregate(average=Avg("rating"), count=Count("id"))
+
+    my_review = None
+    can_review = False
+    if request.user.is_authenticated and is_client(request.user):
+        my_review = reviews.filter(customer=request.user).first()
+        if not my_review:
+            can_review = Booking.objects.filter(
+                workspace=workspace,
+                customer=request.user,
+                status=Booking.Status.CONFIRMED,
+                start_at__lt=timezone.now(),
+            ).exists()
+
     return render(request, "booking/workspace_detail.html", {
         "workspace": workspace,
         "services": services,
+        "reviews": reviews,
+        "rating_average": rating_stats["average"],
+        "rating_count": rating_stats["count"],
+        "my_review": my_review,
+        "can_review": can_review,
     })
 
 
@@ -239,11 +261,23 @@ def provider_home(request):
             status=Booking.Status.CONFIRMED
         ).count()
 
+    # 4. Trend de venituri pe ultimele 7 zile, pentru graficul din dashboard
+    revenue_chart = []
+    if workspace:
+        for i in range(6, -1, -1):
+            day = today - timedelta(days=i)
+            total = workspace.bookings.filter(
+                start_at__date=day,
+                status=Booking.Status.CONFIRMED,
+            ).aggregate(total=Sum('service__price'))['total'] or 0
+            revenue_chart.append({"label": day.strftime("%d %b"), "value": float(total)})
+
     return render(request, "booking/provider_home.html", {
         "workspace": workspace,
         "bookings_today": bookings_today,
         "stats": stats,
         "today": today,
+        "revenue_chart": revenue_chart,
     })
 
 
@@ -432,6 +466,7 @@ def provider_timeoff(request):
     })
 
 @login_required
+@require_POST
 def delete_timeoff(request, timeoff_id):
     timeoff = get_object_or_404(
         TimeOff,
@@ -444,20 +479,77 @@ def delete_timeoff(request, timeoff_id):
     return redirect("booking:provider_timeoff")
 
 
+@login_required(login_url="users:login")
+@require_POST
+def leave_review(request, slug: str):
+    workspace = get_object_or_404(Workspace, slug=slug)
+
+    if not is_client(request.user):
+        messages.error(request, "Only clients can leave reviews.")
+        return redirect("booking:workspace_detail", slug=slug)
+
+    has_past_booking = Booking.objects.filter(
+        workspace=workspace,
+        customer=request.user,
+        status=Booking.Status.CONFIRMED,
+        start_at__lt=timezone.now(),
+    ).exists()
+
+    if not has_past_booking:
+        messages.error(request, "You can only review a business after a completed booking.")
+        return redirect("booking:workspace_detail", slug=slug)
+
+    try:
+        rating = int(request.POST.get("rating", 0))
+    except ValueError:
+        rating = 0
+    comment = (request.POST.get("comment") or "").strip()
+
+    if rating < 1 or rating > 5:
+        messages.error(request, "Rating must be between 1 and 5.")
+        return redirect("booking:workspace_detail", slug=slug)
+
+    review, created = Review.objects.get_or_create(
+        workspace=workspace,
+        customer=request.user,
+        defaults={"rating": rating, "comment": comment},
+    )
+
+    if not created:
+        review.rating = rating
+        review.comment = comment
+
+    try:
+        review.full_clean()
+        review.save()
+        messages.success(request, "Thanks for your review!" if created else "Review updated. Thanks!")
+    except ValidationError as e:
+        messages.error(request, "; ".join(e.messages))
+
+    return redirect("booking:workspace_detail", slug=slug)
+
+
 def get_available_slots(workspace: Workspace, service: Service, day: date):
+    """
+    Calculează sloturile disponibile pentru un serviciu,
+    asigurând o pauză obligatorie după fiecare programare.
+    """
     weekday = day.weekday()
     rules = AvailabilityRule.objects.filter(workspace=workspace, weekday=weekday).order_by("start_time")
+
     if not rules.exists():
         return []
 
     tz = timezone.get_current_timezone()
     now = timezone.now()
 
+    # Nu permitem rezervări cu mai puțin de 2 ore înainte
     booking_threshold = now + timedelta(hours=2)
 
     day_start = timezone.make_aware(datetime.combine(day, datetime.min.time()), tz)
     day_end = day_start + timedelta(days=1)
 
+    # Luăm toate rezervările și perioadele de time-off
     existing_bookings = list(Booking.objects.filter(
         workspace=workspace,
         status=Booking.Status.CONFIRMED,
@@ -473,90 +565,47 @@ def get_available_slots(workspace: Workspace, service: Service, day: date):
 
     all_blocked_intervals = existing_bookings + time_off_periods
 
-    step = timedelta(minutes=30)
-
-    # --- MODIFICARE AICI: Adăugăm pauza de 15 minute la durata căutată ---
-    PAUZA_MIN = 15
+    # --- LOGICA DE PAUZĂ ---
+    PAUZA_MIN = 10
     dur_serviciu = timedelta(minutes=service.duration_min)
-    dur_cu_pauza = timedelta(minutes=service.duration_min + PAUZA_MIN)
+    dur_totala_blocata = timedelta(minutes=service.duration_min + PAUZA_MIN)
 
-    def get_available_slots(workspace: Workspace, service: Service, day: date):
-        """
-        Calculează sloturile disponibile pentru un serviciu,
-        asigurând o pauză obligatorie de 15 minute după fiecare programare.
-        """
-        weekday = day.weekday()
-        rules = AvailabilityRule.objects.filter(workspace=workspace, weekday=weekday).order_by("start_time")
+    # Pasul cu care „scanăm” ziua pentru a găsi locuri libere
+    search_step = timedelta(minutes=15)
 
-        if not rules.exists():
-            return []
+    slots = []
+    for rule in rules:
+        start_dt = timezone.make_aware(datetime.combine(day, rule.start_time), tz)
+        end_dt = timezone.make_aware(datetime.combine(day, rule.end_time), tz)
 
-        tz = timezone.get_current_timezone()
-        now = timezone.now()
+        t = start_dt
+        # Căutăm sloturi cât timp serviciul se încadrează în program
+        while t + dur_serviciu <= end_dt:
+            candidate_start = t
+            # Verificăm dacă intervalul (Serviciu + Pauză) este liber
+            candidate_end_with_pauza = t + dur_totala_blocata
 
-        # Nu permitem rezervări cu mai puțin de 2 ore înainte
-        booking_threshold = now + timedelta(hours=2)
+            # Sărim peste orele din trecut sau sub pragul de 2 ore
+            if candidate_start < booking_threshold:
+                t += search_step
+                continue
 
-        day_start = timezone.make_aware(datetime.combine(day, datetime.min.time()), tz)
-        day_end = day_start + timedelta(days=1)
+            # Verificăm dacă acest bloc (serviciu + pauză) se suprapune cu altceva
+            is_occupied = any(
+                start < candidate_end_with_pauza and end > candidate_start
+                for start, end in all_blocked_intervals
+            )
 
-        # Luăm toate rezervările și perioadele de time-off
-        existing_bookings = list(Booking.objects.filter(
-            workspace=workspace,
-            status=Booking.Status.CONFIRMED,
-            start_at__lt=day_end,
-            end_at__gt=day_start,
-        ).values_list("start_at", "end_at"))
+            if not is_occupied:
+                slots.append(candidate_start)
+                # Dacă am găsit loc, următorul slot posibil
+                # începe abia după ce se termină serviciul + pauza actuală
+                t += dur_totala_blocata
+            else:
+                # Dacă e ocupat, căutăm mai departe peste 15 minute
+                t += search_step
 
-        time_off_periods = list(TimeOff.objects.filter(
-            workspace=workspace,
-            start_at__lt=day_end,
-            end_at__gt=day_start,
-        ).values_list("start_at", "end_at"))
-
-        all_blocked_intervals = existing_bookings + time_off_periods
-
-        # --- LOGICA DE PAUZĂ ---
-        PAUZA_MIN = 15
-        dur_serviciu = timedelta(minutes=service.duration_min)
-        dur_totala_blocata = timedelta(minutes=service.duration_min + PAUZA_MIN)
-
-        # Pasul cu care „scanăm” ziua pentru a găsi locuri libere
-        search_step = timedelta(minutes=15)
-
-        slots = []
-        for rule in rules:
-            start_dt = timezone.make_aware(datetime.combine(day, rule.start_time), tz)
-            end_dt = timezone.make_aware(datetime.combine(day, rule.end_time), tz)
-
-            t = start_dt
-            # Căutăm sloturi cât timp serviciul se încadrează în program
-            while t + dur_serviciu <= end_dt:
-                candidate_start = t
-                # Verificăm dacă intervalul (Serviciu + Pauză) este liber
-                candidate_end_with_pauza = t + dur_totala_blocata
-
-                # Sărim peste orele din trecut sau sub pragul de 2 ore
-                if candidate_start < booking_threshold:
-                    t += search_step
-                    continue
-
-                # Verificăm dacă acest bloc (serviciu + pauză) se suprapune cu altceva
-                is_occupied = any(
-                    start < candidate_end_with_pauza and end > candidate_start
-                    for start, end in all_blocked_intervals
-                )
-
-                if not is_occupied:
-                    slots.append(candidate_start)
-                    # SECRETUL: Dacă am găsit loc, următorul slot POSIBIL
-                    # începe abia după ce se termină serviciul + pauza actuală
-                    t += dur_totala_blocata
-                else:
-                    # Dacă e ocupat, căutăm mai departe peste 15 minute
-                    t += search_step
-
-        return slots
+    return slots
 
 def create_booking_atomic(workspace: Workspace, service: Service, customer, start_at, end_at):
     """

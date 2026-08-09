@@ -8,6 +8,7 @@ urlpatterns = [
     path("business/<slug:slug>/", views.workspace_detail, name="workspace_detail"),
     path("business/<slug:slug>/slots/", views.slots_view, name="slots"),
     path("business/<slug:slug>/book/", views.book_confirm, name="book_confirm"),
+    path("business/<slug:slug>/review/", views.leave_review, name="leave_review"),
     path("my-bookings/", views.my_bookings, name="my_bookings"),
     path("my-bookings/<int:booking_id>/cancel/", views.cancel_booking, name="cancel_booking"),
     path("provider/", views.provider_home, name="provider_home"),

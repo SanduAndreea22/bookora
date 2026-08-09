@@ -20,6 +20,14 @@
           {% if workspace.city %}<span class="dot">•</span>{% endif %}
           <span>{{ workspace.address }}</span>
         {% endif %}
+        {% if rating_count %}
+          <span class="dot">•</span>
+          <span class="stars-inline">★ {{ rating_average|floatformat:1 }}</span>
+          <span>({{ rating_count }} review{{ rating_count|pluralize }})</span>
+        {% else %}
+          <span class="dot">•</span>
+          <span class="muted">No reviews yet</span>
+        {% endif %}
       </div>
 
       <p class="workspace-subtitle">
@@ -51,7 +59,7 @@
                 <div class="service-mini">
                   <span class="badge">{{ s.duration_min }} min</span>
                   {% if s.price %}
-                    <span class="badge badge-accent">{{ s.price }}</span>
+                    <span class="badge badge-accent">{{ s.price }} {{ workspace.currency }}</span>
                   {% endif %}
                 </div>
                 {% if s.description %}
@@ -91,6 +99,57 @@
       </form>
     </div>
 
+  </div>
+
+  <div class="card reviews-card">
+    <div class="card-head">
+      <h2>Reviews</h2>
+      <p>What clients say about {{ workspace.name }}.</p>
+    </div>
+
+    {% if can_review or my_review %}
+      <form method="post" action="{% url 'booking:leave_review' workspace.slug %}" class="review-form">
+        {% csrf_token %}
+        <div class="field">
+          <label for="rating">Your rating</label>
+          <select name="rating" id="rating" required>
+            <option value="" disabled {% if not my_review %}selected{% endif %}>Select 1-5</option>
+            {% for i in "12345" %}
+              <option value="{{ i }}" {% if my_review.rating|stringformat:"s" == i %}selected{% endif %}>{{ i }} star{{ i|pluralize }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="comment">Comment (optional)</label>
+          <input type="text" name="comment" id="comment" maxlength="500"
+                 value="{{ my_review.comment|default:'' }}" placeholder="How was your experience?">
+        </div>
+        <button type="submit" class="btn btn-primary">
+          {% if my_review %}Update review{% else %}Submit review{% endif %}
+        </button>
+      </form>
+    {% elif user.is_authenticated %}
+      <p class="muted">You can leave a review after a completed booking with this business.</p>
+    {% else %}
+      <p class="muted"><a href="{% url 'users:login' %}">Log in</a> to leave a review after your visit.</p>
+    {% endif %}
+
+    {% if reviews %}
+      <div class="reviews-list">
+        {% for r in reviews %}
+          <div class="review-item">
+            <div class="review-head">
+              <span class="stars-inline">{% for i in "12345" %}{% if forloop.counter <= r.rating %}★{% else %}☆{% endif %}{% endfor %}</span>
+              <span class="review-author">{{ r.customer.username }}</span>
+              <span class="muted review-date">{{ r.created_at|date:"d M Y" }}</span>
+            </div>
+            {% if r.comment %}<p class="review-comment">{{ r.comment }}</p>{% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="muted">No reviews yet — be the first to book and leave feedback.</p>
+    {% endif %}
   </div>
 
 </section>

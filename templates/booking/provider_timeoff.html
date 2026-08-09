@@ -74,10 +74,11 @@
             </div>
 
             <div class="timeoff-actions">
-              <a class="btn btn-danger btn-small"
-                 href="{% url 'booking:delete_timeoff' t.id %}">
-                 Delete
-              </a>
+              <form method="post" action="{% url 'booking:delete_timeoff' t.id %}"
+                    onsubmit="return confirm('Delete this time block?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-small">Delete</button>
+              </form>
             </div>
           </div>
         {% endfor %}

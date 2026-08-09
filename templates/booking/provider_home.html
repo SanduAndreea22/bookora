@@ -44,6 +44,12 @@
     </div>
 
     <div class="card" style="margin-bottom: 2rem;">
+      <h2 class="card-title">Revenue — last 7 days</h2>
+      {{ revenue_chart|json_script:"revenue-chart-data" }}
+      <canvas id="revenueChart" height="90" style="margin-top: 1rem;"></canvas>
+    </div>
+
+    <div class="card" style="margin-bottom: 2rem;">
       <h2 class="card-title">Today's Schedule</h2>
       {% if bookings_today %}
         <table class="agenda-table">
@@ -106,4 +112,33 @@
   {% endif %}
 
 </section>
+
+{% if workspace %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+  (function () {
+    const data = JSON.parse(document.getElementById("revenue-chart-data").textContent);
+    const ctx = document.getElementById("revenueChart").getContext("2d");
+    new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: data.map((d) => d.label),
+        datasets: [{
+          label: "Revenue ({{ workspace.currency }})",
+          data: data.map((d) => d.value),
+          backgroundColor: "rgba(46, 204, 113, 0.6)",
+          borderColor: "rgba(46, 204, 113, 1)",
+          borderWidth: 1,
+          borderRadius: 6,
+        }],
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } },
+      },
+    });
+  })();
+</script>
+{% endif %}
 {% endblock %}
