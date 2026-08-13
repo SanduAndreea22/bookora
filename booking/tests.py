@@ -1,4 +1,5 @@
 from datetime import timedelta
+from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -6,7 +7,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from .models import AvailabilityRule, Booking, Service, Workspace
-from .views import SlotError, create_booking_atomic, get_available_slots
+from .services import SlotError, create_booking_atomic, get_available_slots
 
 User = get_user_model()
 
@@ -112,3 +113,65 @@ class AvailableSlotsTests(TestCase):
         AvailabilityRule.objects.all().delete()
         slots = get_available_slots(self.workspace, self.service, self.tomorrow)
         self.assertEqual(slots, [])
+
+
+class ProviderAvailabilityViewTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(username="owner2", password="pw12345", user_type="PROVIDER")
+        self.workspace = Workspace.objects.create(owner=self.owner, name="Studio Two", slug="studio-two")
+        self.client.force_login(self.owner)
+
+    def test_invalid_time_range_is_rejected_without_500(self):
+        response = self.client.post("/booking/provider/availability/", {
+            "weekday": "0",
+            "start_time": "17:00",
+            "end_time": "09:00",
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(AvailabilityRule.objects.count(), 0)
+
+    def test_valid_time_range_is_created(self):
+        response = self.client.post("/booking/provider/availability/", {
+            "weekday": "0",
+            "start_time": "09:00",
+            "end_time": "17:00",
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(AvailabilityRule.objects.count(), 1)
+
+
+class ProviderServicesViewTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(username="owner3", password="pw12345", user_type="PROVIDER")
+        self.workspace = Workspace.objects.create(owner=self.owner, name="Studio Three", slug="studio-three")
+        self.client.force_login(self.owner)
+
+    def test_negative_price_is_rejected(self):
+        response = self.client.post("/booking/provider/services/", {
+            "name": "Haircut",
+            "description": "",
+            "duration_min": "30",
+            "price": "-10",
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(Service.objects.count(), 0)
+
+    def test_non_numeric_price_is_rejected(self):
+        response = self.client.post("/booking/provider/services/", {
+            "name": "Haircut",
+            "description": "",
+            "duration_min": "30",
+            "price": "not-a-number",
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(Service.objects.count(), 0)
+
+    def test_valid_price_is_saved(self):
+        response = self.client.post("/booking/provider/services/", {
+            "name": "Haircut",
+            "description": "",
+            "duration_min": "30",
+            "price": "99.90",
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(Service.objects.get().price, Decimal("99.90"))

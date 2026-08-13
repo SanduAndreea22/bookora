@@ -48,3 +48,73 @@
 }
 
 .muted{ color: var(--muted); }
+
+/* Dashboard stats */
+.stats-grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.stat-card{
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.stat-label{
+  display:block;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.stat-value{
+  display: block;
+  margin-top: 8px;
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.stat-value.is-accent{ color: var(--primary); }
+.stat-value.is-success{ color: #059669; }
+
+/* Today's agenda */
+.agenda-list{
+  display:grid;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.agenda-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(2, 6, 23, 0.01);
+}
+
+.agenda-time{ font-weight: 900; min-width: 52px; }
+.agenda-who{ font-weight: 700; }
+.agenda-service{ color: var(--muted); font-size: 13px; }
+
+.badge-success{
+  font-size: 12px;
+  font-weight: 800;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(16, 185, 129, 0.30);
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}

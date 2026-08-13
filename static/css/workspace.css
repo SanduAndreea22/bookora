@@ -30,7 +30,7 @@
   box-shadow: var(--shadow);
 }
 
-.card-head h2{ margin:0; font-size:18px; }
+.card-head h2{ margin:0; font-size:18px; font-weight:900; }
 .card-head p{ margin:6px 0 0; color: var(--muted); font-size:13px; }
 
 .services-list{ display:grid; gap:10px; margin-top:12px; }
@@ -58,7 +58,7 @@
 .badge{
   font-size:12px;
   font-weight:800;
-  padding: 4px 10px;
+  padding: 6px 10px;
   border-radius: 999px;
   border:1px solid var(--border);
   background: rgba(2, 6, 23, 0.02);

@@ -13,7 +13,13 @@
   <header class="cancel-hero">
     <div>
       <h1 class="cancel-title">Cancel booking</h1>
-      <p class="cancel-subtitle">Are you sure you want to cancel this booking?</p>
+      <p class="cancel-subtitle">
+        {% if booking.status == "CANCELLED" %}
+          This booking has already been cancelled.
+        {% else %}
+          Are you sure you want to cancel this booking?
+        {% endif %}
+      </p>
     </div>
 
     <a class="btn btn-ghost" href="{% url 'booking:my_bookings' %}">← Back</a>
@@ -53,7 +59,7 @@
 
     {% if booking.status == "CANCELLED" %}
       <div class="info">
-        This booking is already cancelled.
+        No further action is needed — this time slot is already free.
       </div>
 
       <div class="actions">
