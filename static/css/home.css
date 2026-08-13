@@ -13,7 +13,7 @@
   font-weight: 700;
   letter-spacing: -1px;
   margin-bottom: 10px;
-  background: linear-gradient(135deg, #4f46e5, #06b6d4);
+  background: linear-gradient(135deg, var(--primary), var(--accent));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -63,8 +63,8 @@
 }
 
 .role-icon.is-accent {
-  background: rgba(6, 182, 212, 0.12);
-  color: #06b6d4;
+  background: rgba(var(--accent-rgb), 0.12);
+  color: var(--accent);
 }
 
 /* ===== TEXT ===== */
@@ -88,13 +88,7 @@
   flex-wrap: wrap;
 }
 
-/* Buttons override (uses base.css buttons) */
-.btn {
-  padding: 10px 16px;
-  border-radius: 10px;
-  font-size: 14px;
-}
-
+/* Buttons use base.css .btn/.btn-primary; .btn-ghost is an additional variant */
 .btn-ghost {
   border: 1px solid var(--border);
   color: var(--text);
