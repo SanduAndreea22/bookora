@@ -99,7 +99,7 @@ def slots_view(request, slug: str):
 
     day = parse_date(day_str)
     if not day:
-        messages.error(request, "Invalid date format. Use YYYY-MM-DD.")
+        messages.error(request, "Invalid date.")
         return redirect("booking:workspace_detail", slug=slug)
 
     slots = get_available_slots(workspace=workspace, service=service, day=day)
@@ -131,7 +131,7 @@ def book_confirm(request, slug: str):
 
     start_at = parse_datetime(start_str)
     if not start_at:
-        messages.error(request, "Invalid start datetime.")
+        messages.error(request, "Invalid datetime.")
         return redirect("booking:workspace_detail", slug=slug)
 
     # Ne asigurăm că avem un timezone corect
@@ -163,7 +163,7 @@ def book_confirm(request, slug: str):
                 start_at=start_at,
                 end_at=end_at,
             )
-            messages.success(request, "Booking created successfully!")
+            messages.success(request, "Booking created successfully.")
             return redirect("booking:my_bookings")
 
         except SlotError as e:
@@ -280,7 +280,7 @@ def provider_home(request):
 def provider_workspace_create(request):
 
     if not is_provider(request.user):
-        messages.error(request, "Only providers can create a workspace.")
+        messages.error(request, "Only providers can create a business.")
         return redirect("pages:home")
 
     existing = Workspace.objects.filter(owner=request.user).first()
@@ -321,10 +321,10 @@ def provider_workspace_create(request):
                 i += 1
         else:
             logger.warning("Exhausted slug attempts for workspace name=%r", name)
-            messages.error(request, "Could not create workspace, please try again.")
+            messages.error(request, "Could not create business, please try again.")
             return redirect("booking:provider_workspace_create")
 
-        messages.success(request, "Workspace created.")
+        messages.success(request, "Business created.")
         return redirect("booking:provider_services")
 
     return render(request, "booking/provider_workspace_form.html")
@@ -413,7 +413,7 @@ def provider_availability(request):
         end_time = request.POST.get("end_time")
 
         if weekday is None or not start_time or not end_time:
-            messages.error(request, "Please fill all fields.")
+            messages.error(request, "Please fill in all fields.")
             return redirect("booking:provider_availability")
 
         try:
@@ -453,7 +453,7 @@ def provider_timeoff(request):
     workspace = Workspace.objects.filter(owner=request.user).first()
 
     if not workspace:
-        messages.error(request, "Create a workspace first.")
+        messages.error(request, "Create a business first.")
         return redirect("booking:provider_workspace_create")
 
     if request.method == "POST":
@@ -465,7 +465,7 @@ def provider_timeoff(request):
         end_at = parse_datetime(end_str)
 
         if not start_at or not end_at:
-            messages.error(request, "Invalid datetime format.")
+            messages.error(request, "Invalid datetime.")
             return redirect("booking:provider_timeoff")
 
         # timezone safety
@@ -556,7 +556,7 @@ def leave_review(request, slug: str):
     try:
         review.full_clean()
         review.save()
-        messages.success(request, "Thanks for your review!" if created else "Review updated. Thanks!")
+        messages.success(request, "Thanks for your review." if created else "Review updated. Thanks!")
     except ValidationError as e:
         messages.error(request, "; ".join(e.messages))
 

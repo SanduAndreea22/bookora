@@ -58,7 +58,7 @@
     </div>
 
     <div class="card">
-      <h2 class="card-title">Workspace Settings</h2>
+      <h2 class="card-title">Business Settings</h2>
       <div class="rows">
         <div class="row">
           <div class="label">Name</div>
@@ -83,10 +83,10 @@
 
   {% else %}
     <div class="card">
-      <h2 class="card-title">Create your workspace</h2>
-      <p class="muted">You need a workspace before your services can appear.</p>
+      <h2 class="card-title">Create your business</h2>
+      <p class="muted">You need a business before your services can appear.</p>
       <div class="actions">
-        <a class="btn btn-primary" href="{% url 'booking:provider_workspace_create' %}">Create workspace</a>
+        <a class="btn btn-primary" href="{% url 'booking:provider_workspace_create' %}">Create business</a>
       </div>
     </div>
   {% endif %}

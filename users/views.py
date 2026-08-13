@@ -68,7 +68,7 @@ def user_login(request):
         if user is not None:
             login(request, user)
             next_url = request.GET.get("next")
-            messages.success(request, f"Welcome back, {user.username}!")
+            messages.success(request, f"Welcome back, {user.username}.")
             return redirect(next_url or "pages:home")
         else:
             messages.error(request, "Invalid username or password.")
