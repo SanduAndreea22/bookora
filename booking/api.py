@@ -9,7 +9,7 @@ from rest_framework.response import Response
 
 from .models import Service, Workspace
 from .serializers import ReviewSerializer, WorkspaceDetailSerializer, WorkspaceListSerializer
-from .views import get_available_slots
+from .services import get_available_slots
 
 
 def _with_rating_stats(queryset):

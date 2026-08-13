@@ -257,7 +257,7 @@ class Review(models.Model):
     booking = models.ForeignKey(
         Booking,
         on_delete=models.CASCADE,
-        related_name="review",
+        related_name="reviews",
         null=True,
         blank=True,
     )

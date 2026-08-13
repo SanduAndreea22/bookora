@@ -1,19 +1,22 @@
 from __future__ import annotations
-from datetime import datetime, timedelta, date
+import logging
+from decimal import Decimal, InvalidOperation
+from datetime import timedelta
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
-from django.db import transaction
-from django.db.models import Q
-from django.shortcuts import redirect, render
-from django.utils.dateparse import parse_date
+from django.db import IntegrityError, transaction
+from django.db.models import Avg, Count, Q, Sum
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.dateparse import parse_date, parse_datetime
 from django.utils.text import slugify
-from django.db.models import Avg, Count
-from .models import Workspace, Service, AvailabilityRule, TimeOff, Booking, Review
-from django.shortcuts import get_object_or_404
-from django.utils.dateparse import parse_datetime
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from .models import Workspace, Service, AvailabilityRule, TimeOff, Booking, Review
+from .services import SlotError, create_booking_atomic, get_available_slots
+
+logger = logging.getLogger(__name__)
+
 
 def is_provider(user) -> bool:
     return getattr(user, "user_type", "") == "PROVIDER"
@@ -21,10 +24,6 @@ def is_provider(user) -> bool:
 
 def is_client(user) -> bool:
     return getattr(user, "user_type", "CLIENT") == "CLIENT"
-
-
-class SlotError(Exception):
-    """User-facing booking error."""
 
 
 # ============================================================
@@ -217,10 +216,6 @@ def cancel_booking(request, booking_id: int):
 # Provider setup (NO admin)
 # ============================================================
 
-from django.db.models import Sum
-from django.utils import timezone
-
-
 @login_required(login_url="users:login")
 def provider_home(request):
     if not is_provider(request.user):
@@ -302,21 +297,33 @@ def provider_workspace_create(request):
             messages.error(request, "Business name must be at least 3 characters.")
             return redirect("booking:provider_workspace_create")
 
+        if not (2 <= len(currency) <= 3) or not currency.isalpha():
+            messages.error(request, "Currency must be a 2-3 letter ISO code (e.g. RON, EUR, USD).")
+            return redirect("booking:provider_workspace_create")
+
         base_slug = slugify(name)[:150] or "business"
         slug = base_slug
         i = 2
-        while Workspace.objects.filter(slug=slug).exists():
-            slug = f"{base_slug}-{i}"
-            i += 1
+        for _ in range(20):
+            try:
+                with transaction.atomic():
+                    Workspace.objects.create(
+                        owner=request.user,
+                        name=name,
+                        slug=slug,
+                        city=city,
+                        address=address,
+                        currency=currency,
+                    )
+                break
+            except IntegrityError:
+                slug = f"{base_slug}-{i}"
+                i += 1
+        else:
+            logger.warning("Exhausted slug attempts for workspace name=%r", name)
+            messages.error(request, "Could not create workspace, please try again.")
+            return redirect("booking:provider_workspace_create")
 
-        Workspace.objects.create(
-            owner=request.user,
-            name=name,
-            slug=slug,
-            city=city,
-            address=address,
-            currency=currency,
-        )
         messages.success(request, "Workspace created.")
         return redirect("booking:provider_services")
 
@@ -351,14 +358,32 @@ def provider_services(request):
             messages.error(request, "Service name is too short.")
             return redirect("booking:provider_services")
 
-        Service.objects.create(
+        price = None
+        if price_raw:
+            try:
+                price = Decimal(price_raw)
+            except InvalidOperation:
+                messages.error(request, "Invalid price.")
+                return redirect("booking:provider_services")
+            if price < 0:
+                messages.error(request, "Price cannot be negative.")
+                return redirect("booking:provider_services")
+
+        service = Service(
             workspace=workspace,
             name=name,
             description=description,
             duration_min=max(5, duration_min),
-            price=price_raw or None,
+            price=price,
             is_active=True,
         )
+        try:
+            service.full_clean()
+            service.save()
+        except ValidationError as e:
+            messages.error(request, "; ".join(e.messages))
+            return redirect("booking:provider_services")
+
         messages.success(request, "Service added.")
         return redirect("booking:provider_services")
 
@@ -392,12 +417,20 @@ def provider_availability(request):
             return redirect("booking:provider_availability")
 
         try:
-            AvailabilityRule.objects.create(
-                workspace=workspace,
-                weekday=int(weekday),
-                start_time=start_time,
-                end_time=end_time,
-            )
+            weekday = int(weekday)
+        except ValueError:
+            messages.error(request, "Invalid weekday.")
+            return redirect("booking:provider_availability")
+
+        rule = AvailabilityRule(
+            workspace=workspace,
+            weekday=weekday,
+            start_time=start_time,
+            end_time=end_time,
+        )
+        try:
+            rule.full_clean()
+            rule.save()
         except ValidationError as e:
             messages.error(request, "; ".join(e.messages))
             return redirect("booking:provider_availability")
@@ -488,14 +521,14 @@ def leave_review(request, slug: str):
         messages.error(request, "Only clients can leave reviews.")
         return redirect("booking:workspace_detail", slug=slug)
 
-    has_past_booking = Booking.objects.filter(
+    last_past_booking = Booking.objects.filter(
         workspace=workspace,
         customer=request.user,
         status=Booking.Status.CONFIRMED,
         start_at__lt=timezone.now(),
-    ).exists()
+    ).order_by("-start_at").first()
 
-    if not has_past_booking:
+    if not last_past_booking:
         messages.error(request, "You can only review a business after a completed booking.")
         return redirect("booking:workspace_detail", slug=slug)
 
@@ -512,12 +545,13 @@ def leave_review(request, slug: str):
     review, created = Review.objects.get_or_create(
         workspace=workspace,
         customer=request.user,
-        defaults={"rating": rating, "comment": comment},
+        defaults={"rating": rating, "comment": comment, "booking": last_past_booking},
     )
 
     if not created:
         review.rating = rating
         review.comment = comment
+        review.booking = last_past_booking
 
     try:
         review.full_clean()
@@ -528,108 +562,3 @@ def leave_review(request, slug: str):
 
     return redirect("booking:workspace_detail", slug=slug)
 
-
-def get_available_slots(workspace: Workspace, service: Service, day: date):
-    """
-    Calculează sloturile disponibile pentru un serviciu,
-    asigurând o pauză obligatorie după fiecare programare.
-    """
-    weekday = day.weekday()
-    rules = AvailabilityRule.objects.filter(workspace=workspace, weekday=weekday).order_by("start_time")
-
-    if not rules.exists():
-        return []
-
-    tz = timezone.get_current_timezone()
-    now = timezone.now()
-
-    # Nu permitem rezervări cu mai puțin de 2 ore înainte
-    booking_threshold = now + timedelta(hours=2)
-
-    day_start = timezone.make_aware(datetime.combine(day, datetime.min.time()), tz)
-    day_end = day_start + timedelta(days=1)
-
-    # Luăm toate rezervările și perioadele de time-off
-    existing_bookings = list(Booking.objects.filter(
-        workspace=workspace,
-        status=Booking.Status.CONFIRMED,
-        start_at__lt=day_end,
-        end_at__gt=day_start,
-    ).values_list("start_at", "end_at"))
-
-    time_off_periods = list(TimeOff.objects.filter(
-        workspace=workspace,
-        start_at__lt=day_end,
-        end_at__gt=day_start,
-    ).values_list("start_at", "end_at"))
-
-    all_blocked_intervals = existing_bookings + time_off_periods
-
-    # --- LOGICA DE PAUZĂ ---
-    PAUZA_MIN = 10
-    dur_serviciu = timedelta(minutes=service.duration_min)
-    dur_totala_blocata = timedelta(minutes=service.duration_min + PAUZA_MIN)
-
-    # Pasul cu care „scanăm” ziua pentru a găsi locuri libere
-    search_step = timedelta(minutes=15)
-
-    slots = []
-    for rule in rules:
-        start_dt = timezone.make_aware(datetime.combine(day, rule.start_time), tz)
-        end_dt = timezone.make_aware(datetime.combine(day, rule.end_time), tz)
-
-        t = start_dt
-        # Căutăm sloturi cât timp serviciul se încadrează în program
-        while t + dur_serviciu <= end_dt:
-            candidate_start = t
-            # Verificăm dacă intervalul (Serviciu + Pauză) este liber
-            candidate_end_with_pauza = t + dur_totala_blocata
-
-            # Sărim peste orele din trecut sau sub pragul de 2 ore
-            if candidate_start < booking_threshold:
-                t += search_step
-                continue
-
-            # Verificăm dacă acest bloc (serviciu + pauză) se suprapune cu altceva
-            is_occupied = any(
-                start < candidate_end_with_pauza and end > candidate_start
-                for start, end in all_blocked_intervals
-            )
-
-            if not is_occupied:
-                slots.append(candidate_start)
-                # Dacă am găsit loc, următorul slot posibil
-                # începe abia după ce se termină serviciul + pauza actuală
-                t += dur_totala_blocata
-            else:
-                # Dacă e ocupat, căutăm mai departe peste 15 minute
-                t += search_step
-
-    return slots
-
-def create_booking_atomic(workspace: Workspace, service: Service, customer, start_at, end_at):
-    """
-    Transaction-safe booking creation (prevents double booking).
-    """
-    with transaction.atomic():
-        overlap = Booking.objects.select_for_update().filter(
-            workspace=workspace,
-            status=Booking.Status.CONFIRMED,
-        ).filter(
-            Q(start_at__lt=end_at) & Q(end_at__gt=start_at)
-        )
-
-        if overlap.exists():
-            raise SlotError("That time slot is already booked.")
-
-        booking = Booking(
-            workspace=workspace,
-            service=service,
-            customer=customer,
-            start_at=start_at,
-            end_at=end_at,
-            status=Booking.Status.CONFIRMED,
-        )
-        booking.full_clean()
-        booking.save()
-        return booking

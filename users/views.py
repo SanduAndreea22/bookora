@@ -1,10 +1,15 @@
+import logging
+
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+from django.contrib.auth.password_validation import validate_password
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 def register(request):
     if request.user.is_authenticated:
@@ -28,12 +33,15 @@ def register(request):
             messages.error(request, "Email already used.")
             return redirect("users:register")
 
-        if len(password) < 6:
-            messages.error(request, "Password must have at least 6 characters.")
-            return redirect("users:register")
-
         if role not in ["CLIENT", "PROVIDER"]:
             role = "CLIENT"
+
+        try:
+            validate_password(password, user=User(username=username, email=email))
+        except ValidationError as e:
+            for error in e.messages:
+                messages.error(request, error)
+            return redirect("users:register")
 
         user = User.objects.create_user(
             username=username,
