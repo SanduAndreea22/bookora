@@ -81,6 +81,17 @@
 .service-actions{
   display:flex;
   align-items:flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.service-actions form{
+  margin: 0;
+}
+
+.btn-small{
+  padding: 6px 10px;
+  font-size: 12px;
 }
 
 .empty{

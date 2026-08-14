@@ -86,9 +86,6 @@
   margin-bottom: 12px;
 }
 
-.mock-card.is-alt {
-  opacity: 0.8;
-}
 
 .mock-title {
   font-weight: 600;
@@ -117,7 +114,7 @@
 
 .pill.is-accent {
   background: rgba(var(--accent-rgb), 0.12);
-  color: var(--accent);
+  color: #155e75;
   border: none;
 }
 

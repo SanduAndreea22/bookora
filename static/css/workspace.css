@@ -103,7 +103,7 @@
 
 /* Reviews */
 .reviews-card{ margin-top: 4px; }
-.stars-inline{ color:#f59e0b; font-weight:800; letter-spacing:1px; }
+.stars-inline{ color:#b45309; font-weight:800; letter-spacing:1px; }
 
 .review-form{
   display:grid;
@@ -125,6 +125,12 @@
   background: var(--card);
   color: var(--text);
   outline:none;
+}
+
+.review-form select:focus,
+.review-form input:focus{
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
 }
 
 .reviews-list{ display:grid; gap:14px; margin-top:16px; }

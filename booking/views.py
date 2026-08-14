@@ -6,8 +6,10 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.db import IntegrityError, transaction
-from django.db.models import Avg, Count, Q, Sum
+from django.db.models import Avg, Count, ProtectedError, Q, Sum
+from urllib.parse import urlencode
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils.dateparse import parse_date, parse_datetime
 from django.utils.text import slugify
 from django.core.exceptions import ValidationError
@@ -82,6 +84,7 @@ def workspace_detail(request, slug: str):
         "rating_count": rating_stats["count"],
         "my_review": my_review,
         "can_review": can_review,
+        "has_availability": workspace.availability_rules.exists(),
     })
 
 
@@ -116,9 +119,13 @@ def slots_view(request, slug: str):
 # Client booking flow
 # ============================================================
 
-@login_required(login_url="users:login")
 def book_confirm(request, slug: str):
     workspace = get_object_or_404(Workspace, slug=slug)
+
+    if not request.user.is_authenticated:
+        messages.info(request, "Please log in or create a free account to confirm this booking.")
+        query = urlencode({"next": request.get_full_path()})
+        return redirect(f"{reverse('users:login')}?{query}")
 
     service_id = request.GET.get("service")
     start_str = request.GET.get("start")
@@ -234,8 +241,12 @@ def provider_home(request):
         "count_today": 0,
         "upcoming_total": 0,
     }
+    has_services = False
+    has_availability = False
 
     if workspace:
+        has_services = workspace.services.exists()
+        has_availability = workspace.availability_rules.exists()
         # 1. Agenda de azi: Filtrăm toate rezervările confirmate pentru data curentă
         bookings_today = workspace.bookings.filter(
             start_at__date=today,
@@ -273,6 +284,8 @@ def provider_home(request):
         "stats": stats,
         "today": today,
         "revenue_chart": revenue_chart,
+        "has_services": has_services,
+        "has_availability": has_availability,
     })
 
 
@@ -343,6 +356,14 @@ def provider_services(request):
 
     services = workspace.services.order_by("name")
 
+    edit_id = request.POST.get("service_id") if request.method == "POST" else request.GET.get("edit")
+    editing_service = get_object_or_404(Service, id=edit_id, workspace=workspace) if edit_id else None
+
+    def redirect_back():
+        if editing_service:
+            return redirect(f"{reverse('booking:provider_services')}?edit={editing_service.id}")
+        return redirect("booking:provider_services")
+
     if request.method == "POST":
         name = (request.POST.get("name") or "").strip()
         description = (request.POST.get("description") or "").strip()
@@ -356,7 +377,7 @@ def provider_services(request):
 
         if len(name) < 2:
             messages.error(request, "Service name is too short.")
-            return redirect("booking:provider_services")
+            return redirect_back()
 
         price = None
         if price_raw:
@@ -364,34 +385,69 @@ def provider_services(request):
                 price = Decimal(price_raw)
             except InvalidOperation:
                 messages.error(request, "Invalid price.")
-                return redirect("booking:provider_services")
+                return redirect_back()
             if price < 0:
                 messages.error(request, "Price cannot be negative.")
-                return redirect("booking:provider_services")
+                return redirect_back()
 
-        service = Service(
-            workspace=workspace,
-            name=name,
-            description=description,
-            duration_min=max(5, duration_min),
-            price=price,
-            is_active=True,
-        )
+        if editing_service:
+            editing_service.name = name
+            editing_service.description = description
+            editing_service.duration_min = max(5, duration_min)
+            editing_service.price = price
+            service = editing_service
+        else:
+            service = Service(
+                workspace=workspace,
+                name=name,
+                description=description,
+                duration_min=max(5, duration_min),
+                price=price,
+                is_active=True,
+            )
+
         try:
             service.full_clean()
             service.save()
         except ValidationError as e:
             messages.error(request, "; ".join(e.messages))
-            return redirect("booking:provider_services")
+            return redirect_back()
 
-        messages.success(request, "Service added.")
+        messages.success(request, "Service updated." if editing_service else "Service added.")
         return redirect("booking:provider_services")
 
     return render(request, "booking/provider_services.html", {
         "workspace": workspace,
         "services": services,
-        "currency": workspace.currency
+        "currency": workspace.currency,
+        "editing_service": editing_service,
     })
+
+
+@login_required
+@require_POST
+def toggle_service_active(request, service_id):
+    service = get_object_or_404(Service, id=service_id, workspace__owner=request.user)
+    service.is_active = not service.is_active
+    service.save(update_fields=["is_active"])
+    messages.success(request, "Service is now active." if service.is_active else "Service deactivated — hidden from clients.")
+    return redirect("booking:provider_services")
+
+
+@login_required
+@require_POST
+def delete_service(request, service_id):
+    service = get_object_or_404(Service, id=service_id, workspace__owner=request.user)
+    try:
+        service.delete()
+        messages.success(request, "Service deleted.")
+    except ProtectedError:
+        messages.error(
+            request,
+            "This service has existing bookings and can't be deleted. "
+            "Deactivate it instead so clients stop seeing it.",
+        )
+    return redirect("booking:provider_services")
 
 
 @login_required(login_url="users:login")
@@ -407,6 +463,14 @@ def provider_availability(request):
 
     rules = workspace.availability_rules.order_by("weekday", "start_time")
 
+    edit_id = request.POST.get("rule_id") if request.method == "POST" else request.GET.get("edit")
+    editing_rule = get_object_or_404(AvailabilityRule, id=edit_id, workspace=workspace) if edit_id else None
+
+    def redirect_back():
+        if editing_rule:
+            return redirect(f"{reverse('booking:provider_availability')}?edit={editing_rule.id}")
+        return redirect("booking:provider_availability")
+
     if request.method == "POST":
         weekday = request.POST.get("weekday")
         start_time = request.POST.get("start_time")
@@ -414,35 +478,52 @@ def provider_availability(request):
 
         if weekday is None or not start_time or not end_time:
             messages.error(request, "Please fill in all fields.")
-            return redirect("booking:provider_availability")
+            return redirect_back()
 
         try:
             weekday = int(weekday)
         except ValueError:
             messages.error(request, "Invalid weekday.")
-            return redirect("booking:provider_availability")
+            return redirect_back()
 
-        rule = AvailabilityRule(
-            workspace=workspace,
-            weekday=weekday,
-            start_time=start_time,
-            end_time=end_time,
-        )
+        if editing_rule:
+            editing_rule.weekday = weekday
+            editing_rule.start_time = start_time
+            editing_rule.end_time = end_time
+            rule = editing_rule
+        else:
+            rule = AvailabilityRule(
+                workspace=workspace,
+                weekday=weekday,
+                start_time=start_time,
+                end_time=end_time,
+            )
+
         try:
             rule.full_clean()
             rule.save()
         except ValidationError as e:
             messages.error(request, "; ".join(e.messages))
-            return redirect("booking:provider_availability")
+            return redirect_back()
 
-        messages.success(request, "Availability rule added.")
+        messages.success(request, "Availability rule updated." if editing_rule else "Availability rule added.")
         return redirect("booking:provider_availability")
 
     return render(request, "booking/provider_availability.html", {
         "workspace": workspace,
         "rules": rules,
         "weekdays": AvailabilityRule.Weekday.choices,
+        "editing_rule": editing_rule,
     })
+
+
+@login_required
+@require_POST
+def delete_availability_rule(request, rule_id):
+    rule = get_object_or_404(AvailabilityRule, id=rule_id, workspace__owner=request.user)
+    rule.delete()
+    messages.success(request, "Availability rule removed.")
+    return redirect("booking:provider_availability")
 
 @login_required
 def provider_timeoff(request):

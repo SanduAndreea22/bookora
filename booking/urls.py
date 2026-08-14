@@ -16,5 +16,8 @@ urlpatterns = [
     path("provider/timeoff/", views.provider_timeoff, name="provider_timeoff"),
     path("provider/timeoff/<int:timeoff_id>/delete/", views.delete_timeoff, name="delete_timeoff"),
     path("provider/services/", views.provider_services, name="provider_services"),
+    path("provider/services/<int:service_id>/toggle-active/", views.toggle_service_active, name="toggle_service_active"),
+    path("provider/services/<int:service_id>/delete/", views.delete_service, name="delete_service"),
     path("provider/availability/", views.provider_availability, name="provider_availability"),
+    path("provider/availability/<int:rule_id>/delete/", views.delete_availability_rule, name="delete_availability_rule"),
 ]

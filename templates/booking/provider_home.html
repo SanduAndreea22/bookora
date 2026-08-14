@@ -17,6 +17,27 @@
     </div>
   </header>
 
+  {% if workspace and not has_services or workspace and not has_availability %}
+    <div class="card">
+      <h2 class="card-title">Finish setting up your business</h2>
+      <div class="rows">
+        <div class="row">
+          <div class="label">{% if has_services %}✅{% else %}⬜{% endif %} Add at least one service</div>
+          <div class="value">
+            {% if not has_services %}<a href="{% url 'booking:provider_services' %}">Add a service</a>{% endif %}
+          </div>
+        </div>
+        <div class="row">
+          <div class="label">{% if has_availability %}✅{% else %}⬜{% endif %} Set your weekly availability</div>
+          <div class="value">
+            {% if not has_availability %}<a href="{% url 'booking:provider_availability' %}">Set availability</a>{% endif %}
+          </div>
+        </div>
+      </div>
+      <p class="muted" style="margin-top:10px;">Clients can't book with you until both steps are done.</p>
+    </div>
+  {% endif %}
+
   {% if workspace %}
     <div class="stats-grid">
       <div class="stat-card">

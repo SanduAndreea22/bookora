@@ -28,18 +28,19 @@
 
   <div class="provider-grid">
 
-    <!-- Add rule -->
+    <!-- Add/edit rule -->
     <div class="card">
-      <h2 class="card-title">Add weekly rule</h2>
+      <h2 class="card-title">{% if editing_rule %}Edit weekly rule{% else %}Add weekly rule{% endif %}</h2>
 
       <form method="post" class="form">
         {% csrf_token %}
+        {% if editing_rule %}<input type="hidden" name="rule_id" value="{{ editing_rule.id }}">{% endif %}
 
         <div class="field">
           <label for="weekday">Weekday</label>
           <select id="weekday" name="weekday" required>
             {% for value, label in weekdays %}
-              <option value="{{ value }}">{{ label }}</option>
+              <option value="{{ value }}" {% if editing_rule.weekday == value %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
           </select>
         </div>
@@ -47,17 +48,22 @@
         <div class="grid">
           <div class="field">
             <label for="start_time">Start time</label>
-            <input id="start_time" name="start_time" type="time" required value="09:00" />
+            <input id="start_time" name="start_time" type="time" required
+                   value="{{ editing_rule.start_time|time:'H:i'|default:'09:00' }}" />
           </div>
 
           <div class="field">
             <label for="end_time">End time</label>
-            <input id="end_time" name="end_time" type="time" required value="17:00" />
+            <input id="end_time" name="end_time" type="time" required
+                   value="{{ editing_rule.end_time|time:'H:i'|default:'17:00' }}" />
           </div>
         </div>
 
         <div class="actions">
-          <button type="submit" class="btn btn-primary">Add rule</button>
+          <button type="submit" class="btn btn-primary">{% if editing_rule %}Save changes{% else %}Add rule{% endif %}</button>
+          {% if editing_rule %}
+            <a class="btn btn-ghost" href="{% url 'booking:provider_availability' %}">Cancel</a>
+          {% endif %}
         </div>
 
         <p class="muted hint">
@@ -83,8 +89,14 @@
                 </div>
               </div>
 
-              <div class="pill">
-                Weekly
+              <div class="rule-actions">
+                <div class="pill">Weekly</div>
+                <a class="btn btn-ghost btn-small" href="{% url 'booking:provider_availability' %}?edit={{ r.id }}">Edit</a>
+                <form method="post" action="{% url 'booking:delete_availability_rule' r.id %}"
+                      onsubmit="return confirm('Remove this availability rule?');">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-danger btn-small">Delete</button>
+                </form>
               </div>
             </div>
           {% endfor %}

@@ -73,6 +73,22 @@
   background: rgba(79, 70, 229, 0.10);
 }
 
+.rule-actions{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.rule-actions form{
+  margin: 0;
+}
+
+.btn-small{
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
 .empty{
   margin-top: 12px;
   border: 1px solid var(--border);

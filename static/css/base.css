@@ -2,7 +2,7 @@
   --bg: #f6f7fb;
   --card: #ffffff;
   --text: #0f172a;
-  --muted: #64748b;
+  --muted: #475569;
   --border: #e5e7eb;
   --primary: #4f46e5;
   --primary-2: #4338ca;
@@ -280,8 +280,33 @@ html[data-theme="dark"] .btn:hover{ background: rgba(148,163,184,0.10); }
 .btn-primary:hover{ background: var(--primary-2); }
 
 .btn-danger{
-  background: #ef4444;
+  background: #dc2626;
   color:#fff;
   border-color: transparent;
 }
 .btn-danger:hover{ filter: brightness(0.96); }
+
+/* Error pages (404/500) */
+.error-page{
+  display: grid;
+  place-items: center;
+  padding: 60px 0;
+}
+.error-card{
+  width: 100%;
+  max-width: 460px;
+  text-align: center;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 40px 28px;
+  box-shadow: var(--shadow);
+}
+.error-card h1{
+  margin: 0 0 10px;
+  font-size: 24px;
+}
+.error-card p{
+  margin: 0 0 20px;
+  color: var(--muted);
+}

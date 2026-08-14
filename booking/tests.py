@@ -1,5 +1,6 @@
 from datetime import timedelta
 from decimal import Decimal
+from urllib.parse import urlencode
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -175,3 +176,208 @@ class ProviderServicesViewTests(TestCase):
         })
         self.assertEqual(response.status_code, 302)
         self.assertEqual(Service.objects.get().price, Decimal("99.90"))
+
+
+class BookConfirmAnonymousTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(username="owner4", password="pw12345", user_type="PROVIDER")
+        self.workspace = Workspace.objects.create(owner=self.owner, name="Studio Four", slug="studio-four")
+        self.service = Service.objects.create(workspace=self.workspace, name="Haircut", duration_min=30)
+
+    def test_anonymous_user_gets_explanatory_message_and_properly_encoded_next(self):
+        start = timezone.now() + timedelta(hours=3)
+        url = f"/booking/business/studio-four/book/?service={self.service.id}&start={start.isoformat()}"
+        response = self.client.get(url)
+
+        expected_next = urlencode({"next": url})
+        self.assertRedirects(
+            response, f"/users/login/?{expected_next}",
+            fetch_redirect_response=False,
+        )
+
+        followed = self.client.get(response.url, follow=True)
+        messages_text = [str(m) for m in followed.context["messages"]]
+        self.assertTrue(any("log in" in m.lower() for m in messages_text))
+
+    def test_full_round_trip_registering_mid_booking_returns_to_the_same_booking(self):
+        """The exact bug found in manual UX testing: the booking URL contains its
+        own '&' (service + start params), which must survive being nested inside
+        the login/register redirect chain instead of getting truncated."""
+        import re
+
+        start = timezone.now() + timedelta(hours=3)
+        booking_url = f"/booking/business/studio-four/book/?service={self.service.id}&start={start.isoformat()}"
+
+        response = self.client.get(booking_url)
+        login_url = response.url
+        self.assertIn(urlencode({"next": booking_url}), login_url)
+
+        # Follow the actual "Create one" link as rendered in the page, rather than
+        # hand-building it, since the template's |urlencode filter and Python's
+        # urlencode() don't escape identically -- only the real link matters.
+        response = self.client.get(login_url)
+        match = re.search(r'href="(/users/register/\?next=[^"]+)"', response.content.decode())
+        self.assertIsNotNone(match, "Create one link with ?next= not found on login page")
+        register_link = match.group(1).replace("&amp;", "&")
+
+        response = self.client.get(register_link)
+        self.assertEqual(response.context["next"], booking_url)
+
+        response = self.client.post(register_link, {
+            "username": "roundtrip_user",
+            "email": "roundtrip@example.com",
+            "password": "S0me-Very-Unusual-Pass",
+            "role": "CLIENT",
+            "next": booking_url,
+        })
+        self.assertRedirects(response, booking_url, fetch_redirect_response=False)
+
+
+class WorkspaceDetailAvailabilityTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(username="owner5", password="pw12345", user_type="PROVIDER")
+        self.workspace = Workspace.objects.create(owner=self.owner, name="Studio Five", slug="studio-five")
+
+    def test_shows_message_when_no_availability_set(self):
+        response = self.client.get("/booking/business/studio-five/")
+        self.assertContains(response, "hasn't set their booking hours yet")
+
+    def test_shows_form_when_availability_set(self):
+        AvailabilityRule.objects.create(
+            workspace=self.workspace, weekday=0, start_time="09:00", end_time="17:00",
+        )
+        response = self.client.get("/booking/business/studio-five/")
+        self.assertContains(response, "See available slots")
+        self.assertNotContains(response, "hasn't set their booking hours yet")
+
+
+class ProviderDashboardChecklistTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(username="owner6", password="pw12345", user_type="PROVIDER")
+        self.workspace = Workspace.objects.create(owner=self.owner, name="Studio Six", slug="studio-six")
+        self.client.force_login(self.owner)
+
+    def test_checklist_shown_when_incomplete(self):
+        response = self.client.get("/booking/provider/")
+        self.assertContains(response, "Finish setting up your business")
+
+    def test_checklist_hidden_once_complete(self):
+        Service.objects.create(workspace=self.workspace, name="Haircut", duration_min=30)
+        AvailabilityRule.objects.create(
+            workspace=self.workspace, weekday=0, start_time="09:00", end_time="17:00",
+        )
+        response = self.client.get("/booking/provider/")
+        self.assertNotContains(response, "Finish setting up your business")
+
+
+class CustomErrorPageTests(TestCase):
+    def test_404_uses_custom_page(self):
+        response = self.client.get("/booking/business/this-does-not-exist/")
+        self.assertEqual(response.status_code, 404)
+        self.assertContains(response, "Page not found", status_code=404)
+        self.assertContains(response, "Back to Bookora", status_code=404)
+
+
+class ServiceEditDeleteTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(username="owner7", password="pw12345", user_type="PROVIDER")
+        self.other_owner = User.objects.create_user(username="owner8", password="pw12345", user_type="PROVIDER")
+        self.workspace = Workspace.objects.create(owner=self.owner, name="Studio Seven", slug="studio-seven")
+        self.other_workspace = Workspace.objects.create(owner=self.other_owner, name="Studio Eight", slug="studio-eight")
+        self.service = Service.objects.create(
+            workspace=self.workspace, name="Haircut", duration_min=30, price=Decimal("50.00"),
+        )
+        self.client.force_login(self.owner)
+
+    def test_edit_form_is_prefilled(self):
+        response = self.client.get(f"/booking/provider/services/?edit={self.service.id}")
+        self.assertContains(response, 'value="Haircut"')
+        self.assertContains(response, "Save changes")
+
+    def test_edit_updates_existing_service_not_creates_new(self):
+        response = self.client.post("/booking/provider/services/", {
+            "service_id": self.service.id,
+            "name": "Haircut & Beard",
+            "description": "",
+            "duration_min": "45",
+            "price": "60.00",
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(Service.objects.count(), 1)
+        self.service.refresh_from_db()
+        self.assertEqual(self.service.name, "Haircut & Beard")
+        self.assertEqual(self.service.duration_min, 45)
+
+    def test_toggle_active_flips_state(self):
+        self.assertTrue(self.service.is_active)
+        self.client.post(f"/booking/provider/services/{self.service.id}/toggle-active/")
+        self.service.refresh_from_db()
+        self.assertFalse(self.service.is_active)
+
+    def test_delete_service_without_bookings_succeeds(self):
+        response = self.client.post(f"/booking/provider/services/{self.service.id}/delete/", follow=True)
+        self.assertEqual(Service.objects.count(), 0)
+        messages_text = [str(m) for m in response.context["messages"]]
+        self.assertTrue(any("deleted" in m.lower() for m in messages_text))
+
+    def test_delete_service_with_bookings_is_protected(self):
+        customer = User.objects.create_user(username="protectclient", password="pw12345", user_type="CLIENT")
+        start = timezone.now() + timedelta(hours=3)
+        Booking.objects.create(
+            workspace=self.workspace, service=self.service, customer=customer,
+            start_at=start, end_at=start + timedelta(minutes=30),
+        )
+        response = self.client.post(f"/booking/provider/services/{self.service.id}/delete/", follow=True)
+        self.assertEqual(Service.objects.count(), 1)
+        messages_text = [str(m) for m in response.context["messages"]]
+        self.assertTrue(any("deactivate" in m.lower() for m in messages_text))
+
+    def test_cannot_edit_or_delete_another_providers_service(self):
+        other_service = Service.objects.create(workspace=self.other_workspace, name="Massage", duration_min=60)
+
+        response = self.client.get(f"/booking/provider/services/?edit={other_service.id}")
+        self.assertEqual(response.status_code, 404)
+
+        response = self.client.post(f"/booking/provider/services/{other_service.id}/delete/")
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(Service.objects.filter(id=other_service.id).count(), 1)
+
+
+class AvailabilityRuleEditDeleteTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(username="owner9", password="pw12345", user_type="PROVIDER")
+        self.other_owner = User.objects.create_user(username="owner10", password="pw12345", user_type="PROVIDER")
+        self.workspace = Workspace.objects.create(owner=self.owner, name="Studio Nine", slug="studio-nine")
+        self.other_workspace = Workspace.objects.create(owner=self.other_owner, name="Studio Ten", slug="studio-ten")
+        self.rule = AvailabilityRule.objects.create(
+            workspace=self.workspace, weekday=0, start_time="09:00", end_time="17:00",
+        )
+        self.client.force_login(self.owner)
+
+    def test_edit_updates_existing_rule_not_creates_new(self):
+        response = self.client.post("/booking/provider/availability/", {
+            "rule_id": self.rule.id,
+            "weekday": "2",
+            "start_time": "10:00",
+            "end_time": "18:00",
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(AvailabilityRule.objects.count(), 1)
+        self.rule.refresh_from_db()
+        self.assertEqual(self.rule.weekday, 2)
+
+    def test_delete_rule(self):
+        self.client.post(f"/booking/provider/availability/{self.rule.id}/delete/")
+        self.assertEqual(AvailabilityRule.objects.count(), 0)
+
+    def test_cannot_edit_or_delete_another_providers_rule(self):
+        other_rule = AvailabilityRule.objects.create(
+            workspace=self.other_workspace, weekday=1, start_time="09:00", end_time="17:00",
+        )
+
+        response = self.client.get(f"/booking/provider/availability/?edit={other_rule.id}")
+        self.assertEqual(response.status_code, 404)
+
+        response = self.client.post(f"/booking/provider/availability/{other_rule.id}/delete/")
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(AvailabilityRule.objects.filter(id=other_rule.id).count(), 1)
