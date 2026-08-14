@@ -22,7 +22,8 @@
   const menuToggle = document.getElementById("menuToggle");
   const navbar = document.getElementById("navbar");
   if (menuToggle && navbar) {
-    menuToggle.addEventListener("click", () => {
+    menuToggle.addEventListener("click", (e) => {
+      e.stopPropagation();
       navbar.classList.toggle("open");
     });
   }
