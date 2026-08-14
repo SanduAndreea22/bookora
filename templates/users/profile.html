@@ -16,7 +16,7 @@
     <div class="profile-header">
 
       <div class="profile-info">
-        <h2>{{ user.username }}</h2>
+        <h1>{{ user.username }}</h1>
         <p>{{ user.email }}</p>
 
         {% if user.user_type == "PROVIDER" %}
@@ -42,13 +42,13 @@
 
         <a href="{% url 'booking:my_bookings' %}" class="profile-link">
           <div class="icon blue"><i class="fa-solid fa-calendar-check"></i></div>
-          <h3>My bookings</h3>
+          <h2>My bookings</h2>
           <p>View and manage your reservations</p>
         </a>
 
         <a href="{% url 'booking:services_list' %}" class="profile-link">
           <div class="icon green"><i class="fa-solid fa-magnifying-glass"></i></div>
-          <h3>Browse services</h3>
+          <h2>Browse services</h2>
           <p>Find a service and book an appointment</p>
         </a>
 
@@ -58,19 +58,19 @@
 
         <a href="{% url 'booking:provider_home' %}" class="profile-link">
           <div class="icon blue"><i class="fa-solid fa-chart-line"></i></div>
-          <h3>Dashboard</h3>
+          <h2>Dashboard</h2>
           <p>Manage your business overview</p>
         </a>
 
         <a href="{% url 'booking:provider_services' %}" class="profile-link">
           <div class="icon purple"><i class="fa-solid fa-scissors"></i></div>
-          <h3>My services</h3>
+          <h2>My services</h2>
           <p>Create and edit your services</p>
         </a>
 
         <a href="{% url 'booking:provider_home' %}" class="profile-link">
           <div class="icon green"><i class="fa-solid fa-calendar-days"></i></div>
-          <h3>Bookings</h3>
+          <h2>Bookings</h2>
           <p>See upcoming bookings</p>
         </a>
 

@@ -2,7 +2,7 @@
   --bg: #f6f7fb;
   --card: #ffffff;
   --text: #0f172a;
-  --muted: #64748b;
+  --muted: #475569;
   --border: #e5e7eb;
   --primary: #4f46e5;
   --primary-2: #4338ca;
@@ -280,7 +280,7 @@ html[data-theme="dark"] .btn:hover{ background: rgba(148,163,184,0.10); }
 .btn-primary:hover{ background: var(--primary-2); }
 
 .btn-danger{
-  background: #ef4444;
+  background: #dc2626;
   color:#fff;
   border-color: transparent;
 }

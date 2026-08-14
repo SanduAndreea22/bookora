@@ -93,7 +93,7 @@
 .btn-primary:hover{ background: var(--primary-2); }
 
 .btn-danger{
-  background: rgba(239, 68, 68, 1);
+  background: #dc2626;
   color: #fff;
   border-color: transparent;
 }

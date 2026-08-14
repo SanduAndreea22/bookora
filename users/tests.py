@@ -117,3 +117,9 @@ class ProfileViewTests(TestCase):
     def test_requires_login(self):
         response = self.client.get(reverse("users:profile"))
         self.assertEqual(response.status_code, 302)
+
+    def test_page_has_exactly_one_h1(self):
+        user = User.objects.create_user(username="a11yuser", password="S0me-Very-Unusual-Pass")
+        self.client.force_login(user)
+        response = self.client.get(reverse("users:profile"))
+        self.assertContains(response, f"<h1>{user.username}</h1>", count=1)
