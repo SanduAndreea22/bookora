@@ -29,35 +29,39 @@
   <div class="provider-grid">
 
     <div class="card">
-      <h2 class="card-title">Add service</h2>
+      <h2 class="card-title">{% if editing_service %}Edit service{% else %}Add service{% endif %}</h2>
 
       <form method="post" class="form">
         {% csrf_token %}
+        {% if editing_service %}<input type="hidden" name="service_id" value="{{ editing_service.id }}">{% endif %}
 
         <div class="field">
           <label for="name">Service name</label>
-          <input id="name" name="name" required placeholder="e.g. Haircut" />
+          <input id="name" name="name" required placeholder="e.g. Haircut" value="{{ editing_service.name|default:'' }}" />
         </div>
 
         <div class="field">
           <label for="description">Description</label>
-          <textarea id="description" name="description" rows="4" placeholder="Short description (optional)"></textarea>
+          <textarea id="description" name="description" rows="4" placeholder="Short description (optional)">{{ editing_service.description|default:'' }}</textarea>
         </div>
 
         <div class="grid">
           <div class="field">
             <label for="duration_min">Duration (minutes)</label>
-            <input id="duration_min" name="duration_min" type="number" min="5" step="5" value="30" />
+            <input id="duration_min" name="duration_min" type="number" min="5" step="5" value="{{ editing_service.duration_min|default:30 }}" />
           </div>
 
           <div class="field">
             <label for="price">Price ({{ workspace.currency }})</label>
-            <input id="price" name="price" type="number" step="0.01" placeholder="e.g. 120.00" />
+            <input id="price" name="price" type="number" step="0.01" placeholder="e.g. 120.00" value="{{ editing_service.price|default:'' }}" />
           </div>
         </div>
 
         <div class="actions">
-          <button type="submit" class="btn btn-primary">Add service</button>
+          <button type="submit" class="btn btn-primary">{% if editing_service %}Save changes{% else %}Add service{% endif %}</button>
+          {% if editing_service %}
+            <a class="btn btn-ghost" href="{% url 'booking:provider_services' %}">Cancel</a>
+          {% endif %}
         </div>
 
         <p class="muted hint">
@@ -90,9 +94,20 @@
               </div>
 
               <div class="service-actions">
-                <a class="btn btn-ghost" href="{% url 'booking:workspace_detail' workspace.slug %}">
-                  View public page
-                </a>
+                <a class="btn btn-ghost" href="{% url 'booking:provider_services' %}?edit={{ s.id }}">Edit</a>
+
+                <form method="post" action="{% url 'booking:toggle_service_active' s.id %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-ghost">
+                    {% if s.is_active %}Deactivate{% else %}Activate{% endif %}
+                  </button>
+                </form>
+
+                <form method="post" action="{% url 'booking:delete_service' s.id %}"
+                      onsubmit="return confirm('Delete this service? This can\'t be undone.');">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-danger btn-small">Delete</button>
+                </form>
               </div>
             </div>
           {% endfor %}
