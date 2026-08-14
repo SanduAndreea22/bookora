@@ -81,22 +81,26 @@
         <p>Select a date, then see free hours.</p>
       </div>
 
-      <form method="get" action="{% url 'booking:slots' workspace.slug %}" class="availability-form" id="availabilityForm">
-        <input type="hidden" name="service" id="serviceInput">
+      {% if has_availability %}
+        <form method="get" action="{% url 'booking:slots' workspace.slug %}" class="availability-form" id="availabilityForm">
+          <input type="hidden" name="service" id="serviceInput">
 
-        <div class="field">
-          <label for="date">Date</label>
-          <input type="date" id="date" name="date" required>
-        </div>
+          <div class="field">
+            <label for="date">Date</label>
+            <input type="date" id="date" name="date" required>
+          </div>
 
-        <button type="submit" class="btn btn-primary" id="seeSlotsBtn" disabled>
-          See available slots
-        </button>
+          <button type="submit" class="btn btn-primary" id="seeSlotsBtn" disabled>
+            See available slots
+          </button>
 
-        <p class="help muted" id="pickHelp">
-          Pick a service first (left), then choose a date.
-        </p>
-      </form>
+          <p class="help muted" id="pickHelp">
+            Pick a service first (left), then choose a date.
+          </p>
+        </form>
+      {% else %}
+        <p class="muted">This business hasn't set their booking hours yet. Please check back later.</p>
+      {% endif %}
     </div>
 
   </div>
@@ -160,6 +164,8 @@
     const serviceInput = document.getElementById("serviceInput");
     const btn = document.getElementById("seeSlotsBtn");
     const help = document.getElementById("pickHelp");
+
+    if (!serviceInput || !btn || !help) return;
 
     function update() {
       const checked = document.querySelector(".service-radio:checked");

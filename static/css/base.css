@@ -285,3 +285,28 @@ html[data-theme="dark"] .btn:hover{ background: rgba(148,163,184,0.10); }
   border-color: transparent;
 }
 .btn-danger:hover{ filter: brightness(0.96); }
+
+/* Error pages (404/500) */
+.error-page{
+  display: grid;
+  place-items: center;
+  padding: 60px 0;
+}
+.error-card{
+  width: 100%;
+  max-width: 460px;
+  text-align: center;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 40px 28px;
+  box-shadow: var(--shadow);
+}
+.error-card h1{
+  margin: 0 0 10px;
+  font-size: 24px;
+}
+.error-card p{
+  margin: 0 0 20px;
+  color: var(--muted);
+}

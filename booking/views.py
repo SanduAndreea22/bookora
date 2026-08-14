@@ -8,6 +8,7 @@ from django.views.decorators.http import require_POST
 from django.db import IntegrityError, transaction
 from django.db.models import Avg, Count, Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils.dateparse import parse_date, parse_datetime
 from django.utils.text import slugify
 from django.core.exceptions import ValidationError
@@ -82,6 +83,7 @@ def workspace_detail(request, slug: str):
         "rating_count": rating_stats["count"],
         "my_review": my_review,
         "can_review": can_review,
+        "has_availability": workspace.availability_rules.exists(),
     })
 
 
@@ -116,9 +118,12 @@ def slots_view(request, slug: str):
 # Client booking flow
 # ============================================================
 
-@login_required(login_url="users:login")
 def book_confirm(request, slug: str):
     workspace = get_object_or_404(Workspace, slug=slug)
+
+    if not request.user.is_authenticated:
+        messages.info(request, "Please log in or create a free account to confirm this booking.")
+        return redirect(f"{reverse('users:login')}?next={request.get_full_path()}")
 
     service_id = request.GET.get("service")
     start_str = request.GET.get("start")
@@ -234,8 +239,12 @@ def provider_home(request):
         "count_today": 0,
         "upcoming_total": 0,
     }
+    has_services = False
+    has_availability = False
 
     if workspace:
+        has_services = workspace.services.exists()
+        has_availability = workspace.availability_rules.exists()
         # 1. Agenda de azi: Filtrăm toate rezervările confirmate pentru data curentă
         bookings_today = workspace.bookings.filter(
             start_at__date=today,
@@ -273,6 +282,8 @@ def provider_home(request):
         "stats": stats,
         "today": today,
         "revenue_chart": revenue_chart,
+        "has_services": has_services,
+        "has_availability": has_availability,
     })
 
 

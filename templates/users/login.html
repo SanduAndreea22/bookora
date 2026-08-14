@@ -39,7 +39,7 @@
 
     <p class="auth-foot">
       Don’t have an account?
-      <a href="{% url 'users:register' %}">Create one</a>
+      <a href="{% url 'users:register' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}">Create one</a>
     </p>
   </div>
 </section>

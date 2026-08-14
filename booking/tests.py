@@ -175,3 +175,64 @@ class ProviderServicesViewTests(TestCase):
         })
         self.assertEqual(response.status_code, 302)
         self.assertEqual(Service.objects.get().price, Decimal("99.90"))
+
+
+class BookConfirmAnonymousTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(username="owner4", password="pw12345", user_type="PROVIDER")
+        self.workspace = Workspace.objects.create(owner=self.owner, name="Studio Four", slug="studio-four")
+        self.service = Service.objects.create(workspace=self.workspace, name="Haircut", duration_min=30)
+
+    def test_anonymous_user_gets_explanatory_message_and_next(self):
+        start = timezone.now() + timedelta(hours=3)
+        url = f"/booking/business/studio-four/book/?service={self.service.id}&start={start.isoformat()}"
+        response = self.client.get(url, follow=True)
+
+        self.assertRedirects(response, f"/users/login/?next={url}")
+        messages_text = [str(m) for m in response.context["messages"]]
+        self.assertTrue(any("log in" in m.lower() for m in messages_text))
+
+
+class WorkspaceDetailAvailabilityTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(username="owner5", password="pw12345", user_type="PROVIDER")
+        self.workspace = Workspace.objects.create(owner=self.owner, name="Studio Five", slug="studio-five")
+
+    def test_shows_message_when_no_availability_set(self):
+        response = self.client.get("/booking/business/studio-five/")
+        self.assertContains(response, "hasn't set their booking hours yet")
+
+    def test_shows_form_when_availability_set(self):
+        AvailabilityRule.objects.create(
+            workspace=self.workspace, weekday=0, start_time="09:00", end_time="17:00",
+        )
+        response = self.client.get("/booking/business/studio-five/")
+        self.assertContains(response, "See available slots")
+        self.assertNotContains(response, "hasn't set their booking hours yet")
+
+
+class ProviderDashboardChecklistTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(username="owner6", password="pw12345", user_type="PROVIDER")
+        self.workspace = Workspace.objects.create(owner=self.owner, name="Studio Six", slug="studio-six")
+        self.client.force_login(self.owner)
+
+    def test_checklist_shown_when_incomplete(self):
+        response = self.client.get("/booking/provider/")
+        self.assertContains(response, "Finish setting up your business")
+
+    def test_checklist_hidden_once_complete(self):
+        Service.objects.create(workspace=self.workspace, name="Haircut", duration_min=30)
+        AvailabilityRule.objects.create(
+            workspace=self.workspace, weekday=0, start_time="09:00", end_time="17:00",
+        )
+        response = self.client.get("/booking/provider/")
+        self.assertNotContains(response, "Finish setting up your business")
+
+
+class CustomErrorPageTests(TestCase):
+    def test_404_uses_custom_page(self):
+        response = self.client.get("/booking/business/this-does-not-exist/")
+        self.assertEqual(response.status_code, 404)
+        self.assertContains(response, "Page not found", status_code=404)
+        self.assertContains(response, "Back to Bookora", status_code=404)
