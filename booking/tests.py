@@ -1,5 +1,6 @@
 from datetime import timedelta
 from decimal import Decimal
+from urllib.parse import urlencode
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -183,14 +184,53 @@ class BookConfirmAnonymousTests(TestCase):
         self.workspace = Workspace.objects.create(owner=self.owner, name="Studio Four", slug="studio-four")
         self.service = Service.objects.create(workspace=self.workspace, name="Haircut", duration_min=30)
 
-    def test_anonymous_user_gets_explanatory_message_and_next(self):
+    def test_anonymous_user_gets_explanatory_message_and_properly_encoded_next(self):
         start = timezone.now() + timedelta(hours=3)
         url = f"/booking/business/studio-four/book/?service={self.service.id}&start={start.isoformat()}"
-        response = self.client.get(url, follow=True)
+        response = self.client.get(url)
 
-        self.assertRedirects(response, f"/users/login/?next={url}")
-        messages_text = [str(m) for m in response.context["messages"]]
+        expected_next = urlencode({"next": url})
+        self.assertRedirects(
+            response, f"/users/login/?{expected_next}",
+            fetch_redirect_response=False,
+        )
+
+        followed = self.client.get(response.url, follow=True)
+        messages_text = [str(m) for m in followed.context["messages"]]
         self.assertTrue(any("log in" in m.lower() for m in messages_text))
+
+    def test_full_round_trip_registering_mid_booking_returns_to_the_same_booking(self):
+        """The exact bug found in manual UX testing: the booking URL contains its
+        own '&' (service + start params), which must survive being nested inside
+        the login/register redirect chain instead of getting truncated."""
+        import re
+
+        start = timezone.now() + timedelta(hours=3)
+        booking_url = f"/booking/business/studio-four/book/?service={self.service.id}&start={start.isoformat()}"
+
+        response = self.client.get(booking_url)
+        login_url = response.url
+        self.assertIn(urlencode({"next": booking_url}), login_url)
+
+        # Follow the actual "Create one" link as rendered in the page, rather than
+        # hand-building it, since the template's |urlencode filter and Python's
+        # urlencode() don't escape identically -- only the real link matters.
+        response = self.client.get(login_url)
+        match = re.search(r'href="(/users/register/\?next=[^"]+)"', response.content.decode())
+        self.assertIsNotNone(match, "Create one link with ?next= not found on login page")
+        register_link = match.group(1).replace("&amp;", "&")
+
+        response = self.client.get(register_link)
+        self.assertEqual(response.context["next"], booking_url)
+
+        response = self.client.post(register_link, {
+            "username": "roundtrip_user",
+            "email": "roundtrip@example.com",
+            "password": "S0me-Very-Unusual-Pass",
+            "role": "CLIENT",
+            "next": booking_url,
+        })
+        self.assertRedirects(response, booking_url, fetch_redirect_response=False)
 
 
 class WorkspaceDetailAvailabilityTests(TestCase):

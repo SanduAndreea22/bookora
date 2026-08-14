@@ -1,4 +1,5 @@
 import logging
+from urllib.parse import urlencode
 
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
@@ -31,7 +32,7 @@ def register(request):
 
     def redirect_to_register():
         if next_url:
-            return redirect(f"{reverse('users:register')}?next={next_url}")
+            return redirect(f"{reverse('users:register')}?{urlencode({'next': next_url})}")
         return redirect("users:register")
 
     if request.method == "POST":

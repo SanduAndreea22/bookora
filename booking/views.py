@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.db import IntegrityError, transaction
 from django.db.models import Avg, Count, Q, Sum
+from urllib.parse import urlencode
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.dateparse import parse_date, parse_datetime
@@ -123,7 +124,8 @@ def book_confirm(request, slug: str):
 
     if not request.user.is_authenticated:
         messages.info(request, "Please log in or create a free account to confirm this booking.")
-        return redirect(f"{reverse('users:login')}?next={request.get_full_path()}")
+        query = urlencode({"next": request.get_full_path()})
+        return redirect(f"{reverse('users:login')}?{query}")
 
     service_id = request.GET.get("service")
     start_str = request.GET.get("start")
