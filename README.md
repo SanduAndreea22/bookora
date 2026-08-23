@@ -31,6 +31,7 @@ Have you ever calculated how much time you waste every week just trying to sched
 - **10-Second Booking:** Pick a time, confirm, and you're done. No phone calls, no waiting.
 - **Personal Management:** Access your booking history and the ability to cancel if plans change.
 - **Reviews:** Rate and review a business after a completed booking.
+- **Favorites:** Save businesses you like and find them again from a dedicated "My favorites" page.
 
 ## 🛡️ Architecture & Reliability
 
