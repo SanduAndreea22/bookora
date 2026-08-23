@@ -37,12 +37,12 @@
 }
 
 .badge-client {
-  background: rgba(16,185,129,0.15);
-  color: #059669;
+  background: rgba(var(--success-rgb),0.15);
+  color: var(--success);
 }
 
 .badge-provider {
-  background: rgba(79,70,229,0.15);
+  background: rgba(var(--primary-rgb),0.15);
   color: var(--primary);
 }
 
@@ -92,5 +92,5 @@
 }
 
 .icon.blue { background: rgba(59,130,246,0.15); color:#2563eb; }
-.icon.green { background: rgba(16,185,129,0.15); color:#059669; }
+.icon.green { background: rgba(var(--success-rgb),0.15); color: var(--success); }
 .icon.purple { background: rgba(139,92,246,0.15); color:#7c3aed; }

@@ -17,7 +17,8 @@
   margin: 0 0 6px;
 }
 
-.field input{
+.field input,
+.field .select-field{
   width:100%;
   padding: 10px 12px;
   border-radius: 14px;
@@ -27,9 +28,10 @@
   outline: none;
 }
 
-.field input:focus{
+.field input:focus,
+.field .select-field:focus{
   border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
+  box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.12);
 }
 
 .hint{ margin: 0; font-size: 13px; }

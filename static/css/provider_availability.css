@@ -29,7 +29,7 @@
 
 .field input:focus, .field select:focus{
   border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
+  box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.12);
 }
 
 .grid{
@@ -69,8 +69,8 @@
   font-weight: 800;
   padding: 6px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(79, 70, 229, 0.25);
-  background: rgba(79, 70, 229, 0.10);
+  border: 1px solid rgba(var(--primary-rgb), 0.25);
+  background: rgba(var(--primary-rgb), 0.10);
 }
 
 .rule-actions{

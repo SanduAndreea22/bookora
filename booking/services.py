@@ -102,7 +102,14 @@ def create_booking_atomic(workspace: Workspace, service: Service, customer, star
     Transaction-safe booking creation (prevents double booking).
     """
     with transaction.atomic():
-        overlap = Booking.objects.select_for_update().filter(
+        # Locuim rândul Workspace-ului, nu rezervările existente: pentru un slot
+        # nou (fără nicio rezervare care să se suprapună) select_for_update() pe
+        # Booking nu blochează nimic, deci două cereri simultane ar trece amândouă
+        # de verificarea de mai jos. Lock-ul pe Workspace serializează toate
+        # creările de rezervări pentru același workspace.
+        Workspace.objects.select_for_update().get(pk=workspace.pk)
+
+        overlap = Booking.objects.filter(
             workspace=workspace,
             status=Booking.Status.CONFIRMED,
         ).filter(

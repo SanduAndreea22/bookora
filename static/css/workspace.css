@@ -12,6 +12,14 @@
 .workspace-meta{ margin-top:8px; color: var(--muted); font-size:13px; }
 .workspace-subtitle{ margin:10px 0 0; color: var(--muted); }
 
+.hero-actions{
+  margin-top: 12px;
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .dot{ margin:0 6px; opacity:.6; }
 
 .workspace-grid{
@@ -64,8 +72,8 @@
   background: rgba(2, 6, 23, 0.02);
 }
 .badge-accent{
-  border-color: rgba(79, 70, 229, 0.25);
-  background: rgba(79, 70, 229, 0.10);
+  border-color: rgba(var(--primary-rgb), 0.25);
+  background: rgba(var(--primary-rgb), 0.10);
 }
 
 .availability-form{ display:grid; gap:12px; margin-top:12px; }
@@ -81,29 +89,48 @@
 }
 .field input:focus{
   border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
+  box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.12);
 }
 
 .help{ margin:0; font-size:13px; }
 .muted{ color: var(--muted); }
 
-/* If base.css doesn't already have buttons */
-.btn{
-  display:inline-flex; align-items:center; justify-content:center;
-  padding:10px 12px; border-radius:14px;
-  border:1px solid var(--border);
-  text-decoration:none; cursor:pointer;
-  font-weight:900; font-size:14px;
-}
-.btn-primary{ background: var(--primary); color:#fff; border-color:transparent; }
-.btn-primary:hover{ background: var(--primary-2); }
 .btn-primary:disabled{ opacity:.5; cursor:not-allowed; }
-.btn-ghost{ background: transparent; color: var(--text); }
-.btn-ghost:hover{ background: rgba(2, 6, 23, 0.04); }
 
 /* Reviews */
 .reviews-card{ margin-top: 4px; }
-.stars-inline{ color:#b45309; font-weight:800; letter-spacing:1px; }
+.stars-inline{ font-weight:800; letter-spacing:2px; }
+
+.star{
+  display:inline-block;
+  color: var(--border);
+  transition: transform .12s ease, color .12s ease;
+}
+.star.is-filled{ color:#f59e0b; }
+.stars-inline:hover .star.is-filled{ transform: scale(1.15); }
+.stars-inline:hover .star.is-filled:hover{ color:#d97706; }
+
+.rating-badge{
+  display:inline-flex;
+  align-items:center;
+  gap: 4px;
+  padding: 3px 10px 3px 8px;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+  font-weight: 800;
+}
+html[data-theme="dark"] .rating-badge{ color: #fbbf24; }
+.rating-badge .star{ transition: transform .15s ease; }
+.rating-badge:hover .star{ transform: scale(1.2) rotate(-8deg); }
+
+.favorite-form{ margin: 0; display: inline-flex; }
+.favorite-btn.is-active{
+  border-color: rgba(236, 72, 153, 0.35);
+  background: rgba(236, 72, 153, 0.10);
+  color: #db2777;
+}
+html[data-theme="dark"] .favorite-btn.is-active{ color: #f9a8d4; }
 
 .review-form{
   display:grid;
@@ -130,7 +157,7 @@
 .review-form select:focus,
 .review-form input:focus{
   border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
+  box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.12);
 }
 
 .reviews-list{ display:grid; gap:14px; margin-top:16px; }

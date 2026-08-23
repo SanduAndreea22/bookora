@@ -1,0 +1,15 @@
+.favorites-list{ display:grid; gap:12px; }
+
+.favorites-list .booking-top{ align-items:center; }
+.favorites-list .booking-service a{
+  color: var(--text);
+  text-decoration: none;
+}
+.favorites-list .booking-service a:hover{ text-decoration: underline; }
+
+.favorite-btn.is-active{
+  border-color: rgba(236, 72, 153, 0.35);
+  background: rgba(236, 72, 153, 0.10);
+  color: #db2777;
+}
+html[data-theme="dark"] .favorite-btn.is-active{ color: #f9a8d4; }

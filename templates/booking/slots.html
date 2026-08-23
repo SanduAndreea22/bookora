@@ -36,10 +36,8 @@
     </form>
 
     <div class="date-quick">
-      {% with prev=day|date:"Y-m-d" %}
-      {% endwith %}
       <a class="btn btn-ghost"
-         href="{% url 'booking:slots' workspace.slug %}?service={{ service.id }}&date={{ day|date:'Y-m-d' }}">
+         href="{% url 'booking:slots' workspace.slug %}?service={{ service.id }}&date={% now 'Y-m-d' %}">
         Today
       </a>
 
@@ -65,8 +63,8 @@
     <div class="empty">
       <h2>No slots available</h2>
       <p class="muted">
-        This business may be closed on this day, fully booked, or the remaining hours
-        are too close to now to book. Try another day.
+        This business may be closed on this day, fully booked, or the only times left
+        are too soon to book. Try another day.
       </p>
 
       <a class="btn btn-primary"

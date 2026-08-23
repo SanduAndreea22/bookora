@@ -70,7 +70,10 @@
           {% endif %}
 
           <div class="card-actions">
-            <a class="btn btn-primary" href="{% url 'booking:workspace_detail' s.workspace.slug %}">
+            <a class="btn btn-primary" href="{% url 'booking:slots' s.workspace.slug %}?service={{ s.id }}&date={% now 'Y-m-d' %}">
+              Book now
+            </a>
+            <a class="btn btn-ghost" href="{% url 'booking:workspace_detail' s.workspace.slug %}">
               View business
             </a>
           </div>

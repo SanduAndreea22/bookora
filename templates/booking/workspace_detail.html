@@ -22,7 +22,7 @@
         {% endif %}
         {% if rating_count %}
           <span class="dot">•</span>
-          <span class="stars-inline">★ {{ rating_average|floatformat:1 }}</span>
+          <span class="rating-badge"><span class="star is-filled">★</span> {{ rating_average|floatformat:1 }}</span>
           <span>({{ rating_count }} review{{ rating_count|pluralize }})</span>
         {% else %}
           <span class="dot">•</span>
@@ -36,6 +36,17 @@
 
       <div class="hero-actions">
         <a class="btn btn-ghost" href="{% url 'booking:services_list' %}">← Back to services</a>
+
+        {% if user.is_authenticated and user.user_type == "CLIENT" %}
+          <form method="post" action="{% url 'booking:toggle_favorite' workspace.slug %}" class="favorite-form">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-ghost favorite-btn{% if is_favorited %} is-active{% endif %}">
+              {% if is_favorited %}♥ Favorited{% else %}♡ Save favorite{% endif %}
+            </button>
+          </form>
+        {% elif not user.is_authenticated %}
+          <a class="btn btn-ghost favorite-btn" href="{% url 'users:login' %}?next={{ request.path|urlencode }}">♡ Save favorite</a>
+        {% endif %}
       </div>
     </div>
   </header>
@@ -95,7 +106,7 @@
           </button>
 
           <p class="help muted" id="pickHelp">
-            Pick a service first (left), then choose a date.
+            Pick a service first, then choose a date.
           </p>
         </form>
       {% else %}
@@ -143,7 +154,7 @@
         {% for r in reviews %}
           <div class="review-item">
             <div class="review-head">
-              <span class="stars-inline">{% for i in "12345" %}{% if forloop.counter <= r.rating %}★{% else %}☆{% endif %}{% endfor %}</span>
+              <span class="stars-inline">{% for i in "12345" %}<span class="star{% if forloop.counter <= r.rating %} is-filled{% endif %}">★</span>{% endfor %}</span>
               <span class="review-author">{{ r.customer.username }}</span>
               <span class="muted review-date">{{ r.created_at|date:"d M Y" }}</span>
             </div>
@@ -176,7 +187,7 @@
       } else {
         serviceInput.value = "";
         btn.disabled = true;
-        help.textContent = "Pick a service first (left), then choose a date.";
+        help.textContent = "Pick a service first, then choose a date.";
       }
     }
 

@@ -13,7 +13,7 @@
 
   <header class="provider-hero">
     <div>
-      <h1 class="provider-title">Manage Time Off</h1>
+      <h1 class="provider-title">Manage time off</h1>
       <p class="provider-subtitle">
         Block days or hours when you are unavailable.
       </p>
@@ -22,7 +22,7 @@
 
   <div class="card">
 
-    <h2 class="card-title">Block Time</h2>
+    <h2 class="card-title">Block time</h2>
 
     <form method="post" class="timeoff-form">
       {% csrf_token %}
@@ -47,7 +47,7 @@
       </div>
 
       <div class="actions">
-        <button type="submit" class="btn btn-primary">Block Time</button>
+        <button type="submit" class="btn btn-primary">Block time</button>
         <a href="{% url 'booking:provider_home' %}" class="btn btn-ghost">Back</a>
       </div>
 
@@ -57,7 +57,7 @@
 
   <div class="card">
 
-    <h2 class="card-title">Blocked Periods</h2>
+    <h2 class="card-title">Blocked periods</h2>
 
     {% if timeoffs %}
       <div class="timeoff-list">

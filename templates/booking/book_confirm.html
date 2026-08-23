@@ -60,6 +60,10 @@
         </div>
         {% endif %}
       </div>
+
+      <p class="muted" style="margin-top:12px; margin-bottom:0; font-size:13px;">
+        Payment is handled directly with the business — nothing is charged online.
+      </p>
     </div>
 
     <div class="card">
@@ -79,7 +83,7 @@
 
       {% if user.is_authenticated and user.user_type != "CLIENT" %}
         <div class="warn">
-          Only <strong>Client</strong> accounts can create bookings.
+          Only accounts registered as a Client can make bookings.
         </div>
       {% endif %}
     </div>

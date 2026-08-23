@@ -50,8 +50,8 @@
   border: 1px solid var(--border);
 }
 .status.is-confirmed{
-  border-color: rgba(16, 185, 129, 0.30);
-  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(var(--success-rgb), 0.30);
+  background: rgba(var(--success-rgb), 0.12);
 }
 .status.is-cancelled{
   border-color: rgba(239, 68, 68, 0.30);
@@ -68,8 +68,8 @@
 .info{
   padding: 12px;
   border-radius: 14px;
-  border: 1px solid rgba(79, 70, 229, 0.25);
-  background: rgba(79, 70, 229, 0.10);
+  border: 1px solid rgba(var(--primary-rgb), 0.25);
+  background: rgba(var(--primary-rgb), 0.10);
 }
 
 .actions{
@@ -77,26 +77,4 @@
   gap: 10px;
   justify-content:flex-end;
   flex-wrap:wrap;
-}
-
-/* If base.css doesn't already have buttons */
-.btn{
-  display:inline-flex; align-items:center; justify-content:center;
-  padding:10px 12px; border-radius:14px;
-  border:1px solid var(--border);
-  text-decoration:none; cursor:pointer;
-  font-weight:900; font-size:14px;
-}
-.btn-ghost{ background: transparent; color: var(--text); }
-.btn-ghost:hover{ background: rgba(2, 6, 23, 0.04); }
-.btn-primary{ background: var(--primary); color:#fff; border-color:transparent; }
-.btn-primary:hover{ background: var(--primary-2); }
-
-.btn-danger{
-  background: #dc2626;
-  color: #fff;
-  border-color: transparent;
-}
-.btn-danger:hover{
-  filter: brightness(0.95);
 }

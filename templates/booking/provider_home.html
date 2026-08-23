@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Provider Dashboard — Bookora{% endblock %}
+{% block title %}Dashboard — Bookora{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/provider.css' %}">
@@ -12,7 +12,7 @@
 
   <header class="provider-hero">
     <div>
-      <h1 class="provider-title">Business Dashboard</h1>
+      <h1 class="provider-title">Dashboard</h1>
       <p class="provider-subtitle">Welcome back! Here's what's happening today, {{ today|date:"d M Y" }}.</p>
     </div>
   </header>
@@ -120,15 +120,28 @@
   (function () {
     const data = JSON.parse(document.getElementById("revenue-chart-data").textContent);
     const ctx = document.getElementById("revenueChart").getContext("2d");
-    new Chart(ctx, {
+
+    function themeColors() {
+      const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+      const primaryRgb = getComputedStyle(document.documentElement)
+        .getPropertyValue("--primary-rgb").trim() || "79, 70, 229";
+      return {
+        text: isDark ? "#94a3b8" : "#475569",
+        grid: isDark ? "rgba(148,163,184,0.18)" : "#e5e7eb",
+        primaryRgb: primaryRgb,
+      };
+    }
+
+    const colors = themeColors();
+    const chart = new Chart(ctx, {
       type: "bar",
       data: {
         labels: data.map((d) => d.label),
         datasets: [{
           label: "Revenue ({{ workspace.currency }})",
           data: data.map((d) => d.value),
-          backgroundColor: "rgba(16, 185, 129, 0.6)",
-          borderColor: "rgba(16, 185, 129, 1)",
+          backgroundColor: `rgba(${colors.primaryRgb}, 0.6)`,
+          borderColor: `rgba(${colors.primaryRgb}, 1)`,
           borderWidth: 1,
           borderRadius: 6,
         }],
@@ -136,9 +149,26 @@
       options: {
         responsive: true,
         plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true } },
+        scales: {
+          x: { ticks: { color: colors.text }, grid: { color: colors.grid } },
+          y: { beginAtZero: true, ticks: { color: colors.text }, grid: { color: colors.grid } },
+        },
       },
     });
+
+    const themeToggle = document.getElementById("themeToggle");
+    if (themeToggle) {
+      themeToggle.addEventListener("click", () => {
+        const c = themeColors();
+        chart.options.scales.x.ticks.color = c.text;
+        chart.options.scales.x.grid.color = c.grid;
+        chart.options.scales.y.ticks.color = c.text;
+        chart.options.scales.y.grid.color = c.grid;
+        chart.data.datasets[0].backgroundColor = `rgba(${c.primaryRgb}, 0.6)`;
+        chart.data.datasets[0].borderColor = `rgba(${c.primaryRgb}, 1)`;
+        chart.update();
+      });
+    }
   })();
 </script>
 {% endif %}

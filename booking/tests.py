@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils import timezone
 
-from .models import AvailabilityRule, Booking, Service, Workspace
+from .models import AvailabilityRule, Booking, Favorite, Service, Workspace
 from .services import SlotError, create_booking_atomic, get_available_slots
 
 User = get_user_model()
@@ -381,3 +381,37 @@ class AvailabilityRuleEditDeleteTests(TestCase):
         response = self.client.post(f"/booking/provider/availability/{other_rule.id}/delete/")
         self.assertEqual(response.status_code, 404)
         self.assertEqual(AvailabilityRule.objects.filter(id=other_rule.id).count(), 1)
+
+
+class FavoriteTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(username="fav_owner", password="pass12345", user_type="PROVIDER")
+        self.client_user = User.objects.create_user(username="fav_client", password="pass12345", user_type="CLIENT")
+        self.workspace = Workspace.objects.create(
+            owner=self.owner, name="Smoke Salon", slug="smoke-salon", city="Testville", currency="RON"
+        )
+
+    def test_toggle_favorite_add_and_remove(self):
+        self.client.login(username="fav_client", password="pass12345")
+
+        response = self.client.get(f"/booking/business/{self.workspace.slug}/")
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.post(f"/booking/business/{self.workspace.slug}/favorite/")
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Favorite.objects.filter(customer=self.client_user, workspace=self.workspace).exists())
+
+        response = self.client.get("/booking/my-favorites/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Smoke Salon")
+
+        response = self.client.post(f"/booking/business/{self.workspace.slug}/favorite/")
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(Favorite.objects.filter(customer=self.client_user, workspace=self.workspace).exists())
+
+    def test_provider_cannot_favorite(self):
+        provider2 = User.objects.create_user(username="fav_provider2", password="pass12345", user_type="PROVIDER")
+        self.client.login(username="fav_provider2", password="pass12345")
+        response = self.client.post(f"/booking/business/{self.workspace.slug}/favorite/")
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(Favorite.objects.filter(workspace=self.workspace).exists())

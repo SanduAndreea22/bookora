@@ -9,7 +9,7 @@
 
 .hero-badge {
   display: inline-block;
-  background: rgba(79, 70, 229, 0.12);
+  background: rgba(var(--primary-rgb), 0.12);
   color: var(--primary);
   padding: 6px 12px;
   border-radius: 999px;
@@ -68,7 +68,7 @@
   border-bottom: 1px solid var(--border);
 }
 
-.dot {
+.mock-dot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
@@ -104,6 +104,14 @@
   flex-wrap: wrap;
 }
 
+.mock-cta {
+  margin-top: 10px;
+  height: 30px;
+  border-radius: 10px;
+  background: var(--primary);
+  opacity: 0.85;
+}
+
 .pill {
   padding: 6px 10px;
   border-radius: 999px;
@@ -116,6 +124,9 @@
   background: rgba(var(--accent-rgb), 0.12);
   color: #155e75;
   border: none;
+}
+html[data-theme="dark"] .pill.is-accent {
+  color: #67e8f9;
 }
 
 /* ===== CARDS ===== */
@@ -154,6 +165,11 @@
   font-weight: 600;
   margin-bottom: 6px;
 }
+
+.feature-title.is-primary { color: var(--primary); }
+.feature-title.is-accent { color: var(--accent); }
+.feature-title.is-success { color: #047857; }
+html[data-theme="dark"] .feature-title.is-success { color: #6ee7b7; }
 
 .feature-text {
   font-size: 14px;

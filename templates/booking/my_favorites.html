@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My favorites — Bookora{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/my_bookings.css' %}">
+<link rel="stylesheet" href="{% static 'css/my_favorites.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="bookings-page">
+
+  <header class="bookings-hero">
+    <div>
+      <h1 class="bookings-title">My favorites</h1>
+      <p class="bookings-subtitle">Businesses you've saved for later.</p>
+    </div>
+
+    <a class="btn btn-primary" href="{% url 'booking:services_list' %}">
+      Browse services
+    </a>
+  </header>
+
+  {% if favorites %}
+    <div class="favorites-list">
+      {% for fav in favorites %}
+        <article class="booking-card">
+          <div class="booking-top">
+            <div>
+              <div class="booking-service">
+                <a href="{% url 'booking:workspace_detail' fav.workspace.slug %}">
+                  {{ fav.workspace.name }}
+                </a>
+              </div>
+              <div class="booking-business">
+                {% if fav.workspace.city %}<span class="muted">{{ fav.workspace.city }}</span>{% endif %}
+              </div>
+            </div>
+
+            <form method="post" action="{% url 'booking:toggle_favorite' fav.workspace.slug %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-ghost favorite-btn is-active">♥ Remove</button>
+            </form>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty">
+      <h2>No favorites yet</h2>
+      <p>Save a business you like from its page to find it here later.</p>
+      <a class="btn btn-primary" href="{% url 'booking:services_list' %}">Find services</a>
+    </div>
+  {% endif %}
+
+</section>
+{% endblock %}

@@ -14,7 +14,7 @@ from django.utils.dateparse import parse_date, parse_datetime
 from django.utils.text import slugify
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from .models import Workspace, Service, AvailabilityRule, TimeOff, Booking, Review
+from .models import Workspace, Service, AvailabilityRule, TimeOff, Booking, Review, Favorite
 from .services import SlotError, create_booking_atomic, get_available_slots
 
 logger = logging.getLogger(__name__)
@@ -66,6 +66,7 @@ def workspace_detail(request, slug: str):
 
     my_review = None
     can_review = False
+    is_favorited = False
     if request.user.is_authenticated and is_client(request.user):
         my_review = reviews.filter(customer=request.user).first()
         if not my_review:
@@ -75,6 +76,7 @@ def workspace_detail(request, slug: str):
                 status=Booking.Status.CONFIRMED,
                 start_at__lt=timezone.now(),
             ).exists()
+        is_favorited = Favorite.objects.filter(customer=request.user, workspace=workspace).exists()
 
     return render(request, "booking/workspace_detail.html", {
         "workspace": workspace,
@@ -84,8 +86,39 @@ def workspace_detail(request, slug: str):
         "rating_count": rating_stats["count"],
         "my_review": my_review,
         "can_review": can_review,
+        "is_favorited": is_favorited,
         "has_availability": workspace.availability_rules.exists(),
     })
+
+
+@login_required(login_url="users:login")
+@require_POST
+def toggle_favorite(request, slug: str):
+    workspace = get_object_or_404(Workspace, slug=slug)
+
+    if not is_client(request.user):
+        messages.error(request, "Only clients can save favorite businesses.")
+        return redirect("booking:workspace_detail", slug=slug)
+
+    favorite, created = Favorite.objects.get_or_create(customer=request.user, workspace=workspace)
+    if not created:
+        favorite.delete()
+        messages.info(request, f"Removed {workspace.name} from your favorites.")
+    else:
+        messages.success(request, f"Added {workspace.name} to your favorites.")
+
+    return redirect("booking:workspace_detail", slug=slug)
+
+
+@login_required(login_url="users:login")
+def my_favorites(request):
+    if not is_client(request.user):
+        messages.error(request, "Only clients can have favorite businesses.")
+        return redirect("pages:home")
+
+    favorites = Favorite.objects.filter(customer=request.user).select_related("workspace").order_by("-created_at")
+
+    return render(request, "booking/my_favorites.html", {"favorites": favorites})
 
 
 def slots_view(request, slug: str):
@@ -149,7 +182,7 @@ def book_confirm(request, slug: str):
 
     if request.method == "POST":
         if not is_client(request.user):
-            messages.error(request, "Only clients can create bookings.")
+            messages.error(request, "Only Client accounts can book appointments — this account is registered as a Provider.")
             return redirect("booking:workspace_detail", slug=slug)
 
         # --- VERIFICARE FINALĂ DE SECURITATE ---

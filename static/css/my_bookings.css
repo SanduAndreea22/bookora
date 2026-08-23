@@ -66,8 +66,8 @@
 }
 
 .booking-status.is-confirmed{
-  border-color: rgba(16, 185, 129, 0.30);
-  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(var(--success-rgb), 0.30);
+  background: rgba(var(--success-rgb), 0.12);
 }
 
 .booking-status.is-cancelled{
@@ -110,16 +110,3 @@
 }
 
 .muted{ color: var(--muted); }
-
-/* If base.css doesn't already have buttons */
-.btn{
-  display:inline-flex; align-items:center; justify-content:center;
-  padding:10px 12px; border-radius:14px;
-  border:1px solid var(--border);
-  text-decoration:none; cursor:pointer;
-  font-weight:900; font-size:14px;
-}
-.btn-primary{ background: var(--primary); color:#fff; border-color:transparent; }
-.btn-primary:hover{ background: var(--primary-2); }
-.btn-ghost{ background: transparent; color: var(--text); }
-.btn-ghost:hover{ background: rgba(2, 6, 23, 0.04); }

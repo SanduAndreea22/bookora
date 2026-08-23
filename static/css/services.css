@@ -58,7 +58,7 @@
 
 .field input:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
+  box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.12);
 }
 
 .actions {
@@ -134,8 +134,8 @@
 }
 
 .badge-accent {
-  border-color: rgba(79, 70, 229, 0.25);
-  background: rgba(79, 70, 229, 0.10);
+  border-color: rgba(var(--primary-rgb), 0.25);
+  background: rgba(var(--primary-rgb), 0.10);
 }
 
 .service-desc {
@@ -153,40 +153,6 @@
   gap: 10px;
   flex-wrap: wrap;
   margin-top: 4px;
-}
-
-/* If base.css doesn't have buttons yet */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  text-decoration: none;
-  cursor: pointer;
-  font-weight: 900;
-  font-size: 14px;
-}
-
-.btn-primary {
-  background: var(--primary);
-  color: #fff;
-  border-color: transparent;
-}
-
-.btn-primary:hover {
-  background: var(--primary-2);
-}
-
-.btn-ghost {
-  background: transparent;
-  color: var(--text);
-}
-
-.btn-ghost:hover {
-  background: rgba(2, 6, 23, 0.04);
 }
 
 .empty {

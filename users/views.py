@@ -6,6 +6,9 @@ from django.core.exceptions import ValidationError
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
+
+from .decorators import ratelimit_post
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
@@ -24,6 +27,7 @@ def _safe_next_url(request, next_url):
     return None
 
 
+@ratelimit_post("register")
 def register(request):
     if request.user.is_authenticated:
         return redirect("users:profile")
@@ -83,6 +87,7 @@ def register(request):
 
     return render(request, "users/register.html", {"next": next_url})
 
+@ratelimit_post("login")
 def user_login(request):
     if request.user.is_authenticated:
         return redirect("pages:home")
@@ -110,6 +115,7 @@ def profile(request):
     })
 
 @login_required
+@require_POST
 def user_logout(request):
     logout(request)
     messages.info(request, "You have been logged out.")

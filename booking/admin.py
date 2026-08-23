@@ -3,7 +3,7 @@ from django.contrib import admin
 from .models import (
     AvailabilityRule,
     Booking,
-    Membership,
+    Favorite,
     Review,
     Service,
     TimeOff,
@@ -16,12 +16,6 @@ class WorkspaceAdmin(admin.ModelAdmin):
     list_display = ("name", "slug", "city", "owner", "currency", "created_at")
     search_fields = ("name", "city", "owner__username")
     prepopulated_fields = {"slug": ("name",)}
-
-
-@admin.register(Membership)
-class MembershipAdmin(admin.ModelAdmin):
-    list_display = ("user", "workspace", "role", "created_at")
-    list_filter = ("role",)
 
 
 @admin.register(Service)
@@ -54,3 +48,9 @@ class BookingAdmin(admin.ModelAdmin):
 class ReviewAdmin(admin.ModelAdmin):
     list_display = ("workspace", "customer", "rating", "created_at")
     list_filter = ("rating", "workspace")
+
+
+@admin.register(Favorite)
+class FavoriteAdmin(admin.ModelAdmin):
+    list_display = ("customer", "workspace", "created_at")
+    list_filter = ("workspace",)

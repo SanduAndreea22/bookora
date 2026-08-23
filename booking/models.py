@@ -34,36 +34,6 @@ class Workspace(models.Model):
         return self.name
 
 
-# ====================================
-# 🧑‍💼 MODEL: Membership (Owner/Staff)
-# ====================================
-
-class Membership(models.Model):
-    class Role(models.TextChoices):
-        OWNER = "OWNER", "Owner"
-        STAFF = "STAFF", "Staff"
-
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="memberships",
-    )
-    workspace = models.ForeignKey(
-        Workspace,
-        on_delete=models.CASCADE,
-        related_name="memberships",
-    )
-    role = models.CharField(max_length=10, choices=Role.choices, default=Role.STAFF)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=["user", "workspace"], name="unique_membership"),
-        ]
-
-    def __str__(self):
-        return f"{self.user} -> {self.workspace} ({self.role})"
-
 
 # ====================================
 # 🛎️ MODEL: Service
@@ -275,3 +245,30 @@ class Review(models.Model):
 
     def __str__(self):
         return f"{self.customer} -> {self.workspace}: {self.rating}/5"
+
+
+# ====================================
+# ❤️ MODEL: Favorite (Saved businesses)
+# ====================================
+
+class Favorite(models.Model):
+    customer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="favorites",
+    )
+    workspace = models.ForeignKey(
+        Workspace,
+        on_delete=models.CASCADE,
+        related_name="favorited_by",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(fields=["customer", "workspace"], name="unique_favorite"),
+        ]
+
+    def __str__(self):
+        return f"{self.customer} ♥ {self.workspace}"

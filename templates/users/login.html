@@ -41,6 +41,12 @@
       Don’t have an account?
       <a href="{% url 'users:register' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}">Create one</a>
     </p>
+
+    <div class="auth-demo-hint">
+      <strong>Just browsing?</strong> This is a portfolio demo — try
+      <code>demo_client1</code> (client) or <code>demo_salon</code> (provider),
+      password <code>demo12345</code>.
+    </div>
   </div>
 </section>
 {% endblock %}

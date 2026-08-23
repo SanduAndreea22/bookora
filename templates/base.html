@@ -43,10 +43,11 @@
 
             {% if user.user_type == "CLIENT" %}
               <li><a href="{% url 'booking:my_bookings' %}" class="nav-link">My bookings</a></li>
+              <li><a href="{% url 'booking:my_favorites' %}" class="nav-link">Favorites</a></li>
             {% endif %}
 
             {% if user.user_type == "PROVIDER" %}
-              <li><a href="{% url 'booking:provider_home' %}" class="nav-link">Provider</a></li>
+              <li><a href="{% url 'booking:provider_home' %}" class="nav-link">Dashboard</a></li>
               <li><a href="{% url 'booking:provider_services' %}" class="nav-link">My services</a></li>
               <li><a href="{% url 'booking:provider_availability' %}" class="nav-link">Availability</a></li>
             {% endif %}
@@ -63,9 +64,12 @@
                 <a href="{% url 'users:profile' %}" class="dropdown-item" role="menuitem">
                   <i class="fa fa-id-badge"></i> Profile
                 </a>
-                <a href="{% url 'users:logout' %}" class="dropdown-item" role="menuitem">
-                  <i class="fa fa-right-from-bracket"></i> Logout
-                </a>
+                <form method="post" action="{% url 'users:logout' %}" class="dropdown-item-form">
+                  {% csrf_token %}
+                  <button type="submit" class="dropdown-item dropdown-item-btn" role="menuitem">
+                    <i class="fa fa-right-from-bracket"></i> Logout
+                  </button>
+                </form>
               </div>
             </li>
 
@@ -87,7 +91,10 @@
   {% if messages %}
     <section class="messages container">
       {% for message in messages %}
-        <div class="message-card">{{ message }}</div>
+        <div class="message-card message-{{ message.tags }}">
+          {% if message.tags == "success" %}<span class="message-check">✓</span>{% endif %}
+          {{ message }}
+        </div>
       {% endfor %}
     </section>
   {% endif %}

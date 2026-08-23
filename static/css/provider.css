@@ -6,10 +6,21 @@
   border-radius: 18px;
   padding: 18px;
   box-shadow: var(--shadow);
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap: 14px;
+  flex-wrap:wrap;
 }
 
 .provider-title{ margin:0; font-size:28px; letter-spacing:-0.02em; }
 .provider-subtitle{ margin:8px 0 0; color: var(--muted); }
+
+.hero-actions{
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
 
 .card{
   background: var(--card);
@@ -114,7 +125,7 @@
   font-weight: 800;
   padding: 6px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(16, 185, 129, 0.30);
-  background: rgba(16, 185, 129, 0.12);
-  color: #047857;
+  border: 1px solid rgba(var(--success-rgb), 0.30);
+  background: rgba(var(--success-rgb), 0.12);
+  color: var(--success);
 }

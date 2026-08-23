@@ -8,6 +8,12 @@
   gap: 12px;
 }
 
+@media (max-width: 560px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .form-group {
   display: flex;
   flex-direction: column;
@@ -35,7 +41,7 @@
 
 .form-group input:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
+  box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.12);
 }
 
 .timeoff-list {
